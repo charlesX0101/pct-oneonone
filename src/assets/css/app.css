@@ -39,6 +39,9 @@
   --slab-lo:rgba(0,0,0,.45);
   --cap:rgba(255,255,255,.035); /* endcap sliver */
   --cap-line:rgba(0,0,0,.35);
+
+  /* Metronome digital stack */
+  --display-digital:"DS-Digital", "Digital-7", "Seven Segment", var(--mono);
 }
 
 /* Theme follows LED active state (CSS-only) */
@@ -535,7 +538,6 @@ button{font-weight:750;}
 }
 
 /* Left group: meter window + toggles */
-/* Left group: meter window + toggles */
 .transport-left{
   display:flex;
   align-items:center;
@@ -544,7 +546,7 @@ button{font-weight:750;}
   flex-wrap:nowrap;
 }
 
-/* Right group: click button (+ practice timer) */
+/* Right group: metronome module + practice timer */
 .transport-right{
   display:flex;
   align-items:center;
@@ -560,12 +562,12 @@ button{font-weight:750;}
 /* keep transport pieces from crushing each other */
 .transport-bar,
 .transport-bar__toggles,
+.metronome-module,
 .practice-timerlane,
-.transport-leds,
-#tool-click,
-#tool-tuner{
+.transport-leds{
   flex-shrink:0;
 }
+
 /* -------------------------
    DAW Buttons
 -------------------------- */
@@ -597,27 +599,148 @@ button{font-weight:750;}
   background:linear-gradient(to bottom, rgba(0,0,0,.22), rgba(255,255,255,.06));
 }
 
-#tool-click,
-#tool-tuner{
-  width:58px;height:58px;
-  padding:0;
-  border-radius:6px;
-  display:grid;
-  place-items:center;
-}
-
 .daw-ico--met{
-  width:34px;height:34px;
+  width:34px;
+  height:34px;
   background:url("/assets/img/click.png") center/contain no-repeat;
   opacity:.95;
 }
 
 .daw-ico--tuner{
-  width:34px;height:34px;
+  width:34px;
+  height:34px;
   background:url("/assets/img/tuner.png") center/contain no-repeat;
   opacity:.95;
 }
 
+/* -------------------------
+   Metronome Module
+-------------------------- */
+
+.metronome-module{
+  width:188px;
+  height:60px;
+  display:grid;
+  grid-template-columns:1fr auto;
+  align-items:stretch;
+  gap:8px;
+
+  padding:0 10px 0 12px;
+
+  background:var(--window);
+  border:1px solid var(--window-border);
+  border-radius:var(--r-1);
+
+  box-shadow:
+    inset 0 1px 0 var(--window-inset),
+    inset 0 -1px 0 rgba(0,0,0,.55);
+}
+
+.metronome-display{
+  min-width:0;
+  display:grid;
+  grid-template-rows:10px 1fr auto;
+  align-items:center;
+  justify-items:center;
+  padding:5px 0 4px;
+}
+
+.metronome-led{
+  width:8px;
+  height:8px;
+  border-radius:999px;
+  background:var(--transport-accent);
+  box-shadow:
+    0 0 6px var(--transport-accent),
+    0 0 12px rgba(255,255,255,.06);
+  opacity:.95;
+}
+
+.metronome-bpm{
+  font-family:var(--display-digital);
+  font-size:28px;
+  line-height:1;
+  letter-spacing:.08em;
+  color:var(--transport-accent);
+  text-shadow:0 0 10px rgba(79,176,255,.12);
+  font-weight:750;
+  white-space:nowrap;
+}
+
+.metronome-meta{
+  width:100%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:12px;
+
+  font-family:var(--mono);
+  font-size:10px;
+  line-height:1;
+  letter-spacing:.14em;
+  color:var(--transport-accent);
+  text-shadow:0 0 10px rgba(79,176,255,.10);
+  font-weight:750;
+}
+
+.metronome-timesig,
+.metronome-mode{
+  display:inline-block;
+  min-width:22px;
+  text-align:center;
+}
+
+.metronome-controls{
+  height:100%;
+  display:grid;
+  grid-template-columns:40px 32px;
+  grid-template-rows:1fr 1fr;
+  gap:6px 6px;
+  align-content:center;
+  padding:6px 0;
+}
+
+.metronome-btn{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+
+  border-radius:4px;
+  font-size:9px;
+  line-height:1;
+  padding:0 6px;
+  min-width:0;
+  text-align:center;
+}
+
+.metronome-btn--primary{
+  color:var(--transport-accent);
+}
+
+.metronome-btn--secondary{
+  font-size:8px;
+  opacity:.88;
+}
+
+#metronome-start{
+  grid-column:1;
+  grid-row:1;
+}
+
+#metronome-tap{
+  grid-column:2;
+  grid-row:1;
+}
+
+#metronome-timesig-select{
+  grid-column:1;
+  grid-row:2;
+}
+
+#metronome-mode-select{
+  grid-column:2;
+  grid-row:2;
+}
 /* -------------------------
    Window 1 (Meter + Date/Time)
 -------------------------- */
@@ -839,13 +962,13 @@ button{font-weight:750;}
 }
 
 .practice-time{
-  font-family:var(--mono);
-  letter-spacing:.14em;
+  font-family:var(--display-digital);
+  letter-spacing:.10em;
   color:var(--transport-accent);
   text-shadow:0 0 10px rgba(79,176,255,.12);
   font-weight:750;
-  font-size:13px;
-  line-height:1.15;
+  font-size:18px;
+  line-height:1.05;
 }
 
 .practice-controls{
@@ -953,12 +1076,11 @@ button{font-weight:750;}
   inset:0;
   background:
     url("/assets/img/pick-grey.png") center 46%/min(520px, 62%) no-repeat;
-  opacity:.10;                 /* subtle like the FL vibe */
+  opacity:.10;
   filter:contrast(1.05);
   pointer-events:none;
   z-index:0;
 }
-/* keep all real content above watermark */
 .center > *{position:relative; z-index:1;}
 
 .right{
@@ -1361,5 +1483,3 @@ button{font-weight:750;}
 
 /* keeps the text vertically centered nicely when wrapping */
 .tool-btn{align-items:center;}
-
-

@@ -104,18 +104,27 @@
           </div>
         </div>
 
-        <!-- RIGHT: practice controls (met + tuner + timer + LEDs) -->
+        <!-- RIGHT: practice controls (met + timer + LEDs) -->
         <div class="transport-right transport-right--practice">
 
-          <!-- Metronome -->
-          <button id="tool-click" class="daw-btn" type="button" aria-label="Metronome">
-            <div class="daw-ico--met" aria-hidden="true"></div>
-          </button>
+          <!-- Metronome Module -->
+          <section class="metronome-module" aria-label="Metronome">
+            <div class="metronome-display" aria-live="polite">
+              <div class="metronome-led" aria-hidden="true"></div>
+              <div class="metronome-bpm" id="metronome-bpm">088</div>
+              <div class="metronome-meta">
+                <span class="metronome-timesig" id="metronome-timesig">4/4</span>
+                <span class="metronome-mode" id="metronome-mode">BB</span>
+              </div>
+            </div>
 
-          <!-- Tuner -->
-          <button id="tool-tuner" class="daw-btn" type="button" aria-label="Tuner">
-            <div class="daw-ico--tuner" aria-hidden="true"></div>
-          </button>
+            <div class="metronome-controls" aria-label="Metronome controls">
+              <button class="daw-btn metronome-btn metronome-btn--primary" id="metronome-start" type="button" aria-label="Start metronome">START</button>
+              <button class="daw-btn metronome-btn metronome-btn--primary" id="metronome-tap" type="button" aria-label="Tap tempo">TAP</button>
+              <button class="daw-btn metronome-btn metronome-btn--secondary" id="metronome-timesig-select" type="button" aria-label="Select time signature">TS</button>
+              <button class="daw-btn metronome-btn metronome-btn--secondary" id="metronome-mode-select" type="button" aria-label="Select beat mode">MODE</button>
+            </div>
+          </section>
 
           <div class="practice-timerlane" aria-label="Practice timer">
             <div class="practice-readout">
@@ -374,6 +383,13 @@
             <img class="tool-ico-img" src="/assets/img/session-notes.png" alt="">
           </span>
           <span class="tool-label">SESSION NOTES</span>
+        </button>
+
+        <button class="tool-btn" id="tool-tuner" type="button">
+          <span class="tool-ico" aria-hidden="true">
+            <img class="tool-ico-img" src="/assets/img/tuner.png" alt="">
+          </span>
+          <span class="tool-label">TUNER</span>
         </button>
       </div>
     </aside>
