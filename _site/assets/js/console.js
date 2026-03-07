@@ -1,11 +1,12 @@
-// console.js (DROP-IN) — RECOVERY STABLE + FRONT-FOCUS FIX
+// console.js (DROP-IN) — RECOVERY STABLE + BUILT-IN METRONOME
 // Owns ONLY: console behavior (transport, timers/meters, popup window manager + tool popups).
 // Does NOT own: gate/warmup logic (app.js owns that).
 //
-// IMPORTANT RECOVERY NOTE:
+// RECOVERY NOTE:
 // - Gear + Learn are temporarily left to their inline onclick handlers in console.njk
 // - This avoids takeover conflicts while restoring stability
-// - Session tools / Click / Tuner still use JS popup reuse logic
+// - Session tools still use JS popup reuse logic
+// - Built-in metronome is now owned here
 
 (() => {
   const $ = (sel, root = document) => root.querySelector(sel);
@@ -482,6 +483,7 @@
     const classroom = $("#tool-classroom");
     const meet = $("#tool-meet");
     const keep = $("#tool-keep");
+    const tuner = $("#tool-tuner");
 
     if (classroom) {
       takeoverButton(classroom, () => {
@@ -512,6 +514,16 @@
         });
       });
     }
+
+    if (tuner) {
+      takeoverButton(tuner, () => {
+        openOrReuse(URLS.tuner, "tuner", {
+          name: "TUNER",
+          w: 980,
+          h: 760,
+        });
+      });
+    }
   }
 
   function setupSignIn() {
@@ -529,7 +541,7 @@
 
   function setupTransportTools() {
     const clickBtn = $("#tool-click");
-    const tunerBtn = $("#tool-tuner");
+    const tunerBtn = $("#tool-tuner-transport");
 
     if (clickBtn) {
       takeoverButton(clickBtn, () => {
@@ -550,6 +562,334 @@
         });
       });
     }
+  }
+
+  function setupMetronome() {
+    const bpmDisplay = $(".metronome-bpm");
+    const timeSigDisplay = $(".metronome-timesig");
+    const modeDisplay = $(".metronome-mode");
+    const led = $(".metronome-led");
+
+    const startBtn = $("#metronome-start");
+    const tapBtn = $("#metronome-tap");
+    const tsBtn = $("#metronome-timesig-select");
+    const modeBtn = $("#metronome-mode-select");
+
+    if (!bpmDisplay || !timeSigDisplay || !modeDisplay || !led) return;
+    if (!startBtn || !tapBtn || !tsBtn || !modeBtn) return;
+
+    const AUDIO_PATHS = {
+      accent: "/assets/audio/metronome-accent.wav",
+      regular: "/assets/audio/metronome-regular.wav",
+    };
+
+    const TIME_SIGNATURES = ["4/4", "3/4", "6/8"];
+    const MODES = ["REG", "BB", "HALF"];
+
+    const LOOKAHEAD_MS = 25;
+    const SCHEDULE_AHEAD_SEC = 0.1;
+    const MIN_BPM = 30;
+    const MAX_BPM = 260;
+    const TAP_RESET_MS = 2000;
+    const MAX_TAPS = 4;
+
+    let bpm = 88;
+    let timeSigIndex = 0;
+    let modeIndex = 0;
+
+    let audioCtx = null;
+    let accentBuffer = null;
+    let regularBuffer = null;
+    let audioInitPromise = null;
+
+    let isRunning = false;
+    let schedulerTimer = 0;
+    let nextNoteTime = 0;
+    let currentBeat = 0;
+
+    let tapTimes = [];
+    let ledPulseToken = 0;
+
+    const clamp = (n, min, max) => Math.min(max, Math.max(min, n));
+
+    function updateDisplay() {
+      bpmDisplay.textContent = String(bpm).padStart(3, "0");
+      timeSigDisplay.textContent = TIME_SIGNATURES[timeSigIndex];
+      modeDisplay.textContent = MODES[modeIndex];
+      startBtn.textContent = isRunning ? "STOP" : "START";
+      startBtn.setAttribute("aria-pressed", isRunning ? "true" : "false");
+    }
+
+    function getBeatsPerBar() {
+      const ts = TIME_SIGNATURES[timeSigIndex];
+      if (ts === "4/4") return 4;
+      if (ts === "3/4") return 3;
+      if (ts === "6/8") return 6;
+      return 4;
+    }
+
+    function getBeatAction(beatIndex) {
+      const mode = MODES[modeIndex];
+
+      if (mode === "REG") {
+        return beatIndex === 0 ? "accent" : "regular";
+      }
+
+      if (mode === "BB") {
+        const ts = TIME_SIGNATURES[timeSigIndex];
+
+        if (ts === "4/4") {
+          return beatIndex === 1 || beatIndex === 3 ? "accent" : "skip";
+        }
+
+        if (ts === "3/4") {
+          return beatIndex === 1 ? "accent" : "skip";
+        }
+
+        if (ts === "6/8") {
+          return beatIndex === 3 ? "accent" : "skip";
+        }
+
+        return "skip";
+      }
+
+      if (mode === "HALF") {
+        return beatIndex === 0 ? "accent" : "skip";
+      }
+
+      return "regular";
+    }
+
+    async function loadSample(url) {
+      const res = await fetch(url);
+      if (!res.ok) {
+        throw new Error(`Failed to load sample: ${url}`);
+      }
+      const arrayBuffer = await res.arrayBuffer();
+      return await audioCtx.decodeAudioData(arrayBuffer);
+    }
+
+    async function initAudio() {
+      if (audioInitPromise) {
+        await audioInitPromise;
+        return;
+      }
+
+      audioInitPromise = (async () => {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+        const [accent, regular] = await Promise.all([
+          loadSample(AUDIO_PATHS.accent),
+          loadSample(AUDIO_PATHS.regular),
+        ]);
+
+        accentBuffer = accent;
+        regularBuffer = regular;
+      })();
+
+      try {
+        await audioInitPromise;
+      } catch (err) {
+        audioInitPromise = null;
+        console.error("Metronome audio init failed:", err);
+        throw err;
+      }
+    }
+
+    function pulseLED(accent, whenAudioTime) {
+      if (!audioCtx || !led) return;
+
+      const msUntilPulse = Math.max(0, (whenAudioTime - audioCtx.currentTime) * 1000);
+      const token = ++ledPulseToken;
+
+      window.setTimeout(() => {
+        if (token !== ledPulseToken) return;
+
+        led.style.transition = "transform 70ms ease, opacity 70ms ease, filter 70ms ease";
+        led.style.opacity = "1";
+        led.style.transform = accent ? "scale(1.75)" : "scale(1.28)";
+        led.style.filter = accent ? "brightness(1.45)" : "brightness(1.15)";
+
+        window.setTimeout(() => {
+          if (token !== ledPulseToken) return;
+          led.style.opacity = ".95";
+          led.style.transform = "scale(1)";
+          led.style.filter = "brightness(1)";
+        }, 85);
+      }, msUntilPulse);
+    }
+
+    function playBuffer(buffer, when) {
+      if (!audioCtx || !buffer) return;
+
+      const src = audioCtx.createBufferSource();
+      const gain = audioCtx.createGain();
+
+      gain.gain.setValueAtTime(1, when);
+      gain.gain.exponentialRampToValueAtTime(0.0001, when + 0.05);
+
+      src.buffer = buffer;
+      src.connect(gain);
+      gain.connect(audioCtx.destination);
+      src.start(when);
+      src.stop(when + Math.min(buffer.duration + 0.05, 0.2));
+    }
+
+    function scheduleBeat(when) {
+      const action = getBeatAction(currentBeat);
+
+      if (action === "accent") {
+        playBuffer(accentBuffer, when);
+        pulseLED(true, when);
+      } else if (action === "regular") {
+        playBuffer(regularBuffer, when);
+        pulseLED(false, when);
+      }
+
+      const secondsPerBeat = 60 / bpm;
+      nextNoteTime += secondsPerBeat;
+      currentBeat += 1;
+
+      if (currentBeat >= getBeatsPerBar()) {
+        currentBeat = 0;
+      }
+    }
+
+    function scheduler() {
+      if (!audioCtx || !isRunning) return;
+
+      while (nextNoteTime < audioCtx.currentTime + SCHEDULE_AHEAD_SEC) {
+        scheduleBeat(nextNoteTime);
+      }
+    }
+
+    function resetTransportPhase() {
+      if (!audioCtx) return;
+      currentBeat = 0;
+      nextNoteTime = audioCtx.currentTime + 0.05;
+    }
+
+    async function startMetronome() {
+      try {
+        await initAudio();
+
+        if (audioCtx.state === "suspended") {
+          await audioCtx.resume();
+        }
+
+        resetTransportPhase();
+
+        if (schedulerTimer) {
+          clearInterval(schedulerTimer);
+          schedulerTimer = 0;
+        }
+
+        schedulerTimer = window.setInterval(scheduler, LOOKAHEAD_MS);
+        isRunning = true;
+        updateDisplay();
+      } catch (err) {
+        console.error("Unable to start metronome:", err);
+      }
+    }
+
+    function stopMetronome() {
+      if (schedulerTimer) {
+        clearInterval(schedulerTimer);
+        schedulerTimer = 0;
+      }
+
+      isRunning = false;
+      ledPulseToken += 1;
+      led.style.opacity = ".95";
+      led.style.transform = "scale(1)";
+      led.style.filter = "brightness(1)";
+      updateDisplay();
+    }
+
+    async function onTapTempo() {
+      try {
+        await initAudio();
+
+        if (audioCtx.state === "suspended") {
+          await audioCtx.resume();
+        }
+      } catch (err) {
+        console.error("Unable to init metronome audio for tap tempo:", err);
+      }
+
+      const now = performance.now();
+
+      if (tapTimes.length && now - tapTimes[tapTimes.length - 1] > TAP_RESET_MS) {
+        tapTimes = [];
+      }
+
+      tapTimes.push(now);
+
+      if (tapTimes.length > MAX_TAPS) {
+        tapTimes.shift();
+      }
+
+      if (tapTimes.length < 2) return;
+
+      const intervals = [];
+      for (let i = 1; i < tapTimes.length; i += 1) {
+        intervals.push(tapTimes[i] - tapTimes[i - 1]);
+      }
+
+      const avg = intervals.reduce((sum, n) => sum + n, 0) / intervals.length;
+      const nextBpm = clamp(Math.round(60000 / avg), MIN_BPM, MAX_BPM);
+
+      bpm = nextBpm;
+      updateDisplay();
+
+      if (isRunning && audioCtx) {
+        resetTransportPhase();
+      }
+    }
+
+    function cycleTimeSignature() {
+      timeSigIndex = (timeSigIndex + 1) % TIME_SIGNATURES.length;
+      updateDisplay();
+
+      if (isRunning && audioCtx) {
+        resetTransportPhase();
+      }
+    }
+
+    function cycleMode() {
+      modeIndex = (modeIndex + 1) % MODES.length;
+      updateDisplay();
+
+      if (isRunning && audioCtx) {
+        resetTransportPhase();
+      }
+    }
+
+    startBtn.addEventListener("click", () => {
+      if (isRunning) stopMetronome();
+      else startMetronome();
+    });
+
+    tapBtn.addEventListener("click", onTapTempo);
+    tsBtn.addEventListener("click", cycleTimeSignature);
+    modeBtn.addEventListener("click", cycleMode);
+
+    document.addEventListener("visibilitychange", () => {
+      if (document.hidden && isRunning) {
+        stopMetronome();
+      }
+    });
+
+    window.addEventListener("beforeunload", () => {
+      if (schedulerTimer) {
+        clearInterval(schedulerTimer);
+      }
+      if (audioCtx && audioCtx.state !== "closed") {
+        audioCtx.close().catch(() => {});
+      }
+    });
+
+    updateDisplay();
   }
 
   function boot() {
@@ -573,6 +913,7 @@
     setupSessionTools();
     setupSignIn();
     setupTransportTools();
+    setupMetronome();
   }
 
   if (document.readyState === "loading") {
