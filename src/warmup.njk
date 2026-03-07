@@ -1,0 +1,56 @@
+---
+layout: layouts/base.njk
+title: Login
+permalink: /warmup/index.html
+---
+
+<main class="warmup">
+
+  <section class="warmup-splash" aria-label="Studio Console Initialization">
+
+    <!-- LEFT: Seal (app icon) -->
+    <div class="warmup-icon">
+      <img
+        src="/assets/img/seal-oneonone.png"
+        alt="One On One Studio Seal"
+      />
+    </div>
+
+    <!-- RIGHT: Identity + Status (Logic-style) -->
+    <div class="warmup-info">
+
+      <!-- Pick icon replaces Apple icon position -->
+      <img
+        src="/assets/img/pick.png"
+        alt=""
+        class="warmup-mark"
+        aria-hidden="true"
+      />
+
+      <div class="warmup-title">Studio Console</div>
+
+      <div class="warmup-version">Version 1.0</div>
+
+      <!-- STATUS LINE -->
+      <div class="warmup-status" id="warmup-status">
+        Connecting to Session Space...
+      </div>
+
+      <!-- INLINE SIGN-IN LINK (hidden until JS shows it) -->
+      <div class="warmup-login" id="warmup-login" hidden>
+        Session Space not logged in.
+        <a href="#" id="session-login">Click here to sign into Session Space.</a>
+      </div>
+
+      <!-- LEGAL -->
+      <div class="warmup-legal">
+        © 2026 PowerChordTheory. All rights reserved.
+      </div>
+
+    </div>
+
+  </section>
+
+</main>
+
+<script src="/assets/js/warmup.js" defer></script>

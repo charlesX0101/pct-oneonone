@@ -1,0 +1,351 @@
+---
+layout: layouts/base.njk
+title: Studio Console
+---
+
+<div id="console-app" class="console">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="topbar-title">ONE ON ONE • STUDIO CONSOLE</div>
+
+    <!-- Top-right stack: date + time only (actions moved to transport row) -->
+    <div class="topbar-rightstack" aria-label="Console status">
+      <div class="topbar-datetime" aria-label="Date and time">
+        <div id="top-date" class="topbar-date">--- -- ----</div>
+        <div id="top-time" class="topbar-time">--:--:--</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TRANSPORT ROW -->
+  <div class="transport-row">
+
+    <!-- LOGO CORNER -->
+    <div class="transport-spacer">
+      <img src="/assets/img/logo.png" alt="PowerChordTheory">
+    </div>
+
+    <!-- TRANSPORT (CENTER COLUMN) -->
+    <div class="transport transport--daw">
+      <div class="transport-unit">
+
+        <!-- LEFT SIDE: meter window + toggles -->
+        <div class="transport-left">
+
+          <!-- METER WINDOW -->
+          <div class="transport-bar">
+            <div class="transport-bar__meters">
+              <div class="meters" aria-hidden="true">
+                {% for i in range(0,16) %}
+                <span class="meter"></span>
+                {% endfor %}
+              </div>
+            </div>
+
+            <!-- UPTIME -->
+            <div class="transport-time" aria-label="Console uptime">
+              <div class="uptime-label">UPTIME</div>
+              <div id="console-uptime" class="clock--transport">00:00:00</div>
+            </div>
+          </div>
+
+          <!-- DRAWER TOGGLES -->
+          <div class="transport-bar__toggles">
+            <button class="daw-btn transport-toggle" id="toggle-board" type="button" aria-label="Toggle board">▲▼</button>
+            <button class="daw-btn transport-toggle" id="toggle-gear" type="button" aria-label="Toggle gear">◀▶</button>
+          </div>
+
+        </div>
+
+        <!-- CENTER: ticker window -->
+        <div class="transport-tickerlane">
+          <div class="ticker">
+            <div class="ticker-track">
+              <span class="ticker-text">
+                ONE ON ONE STUDIO CONSOLE • POWERCHORDTHEORY.COM • GROOVE WITH CONVICTION •
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- RIGHT: practice controls (met + tuner + timer + LEDs) -->
+        <div class="transport-right transport-right--practice">
+
+          <!-- Metronome -->
+          <button id="tool-click" class="daw-btn" type="button" aria-label="Metronome">
+            <div class="daw-ico--met" aria-hidden="true"></div>
+          </button>
+
+          <!-- Tuner -->
+          <button id="tool-tuner" class="daw-btn" type="button" aria-label="Tuner">
+            <div class="daw-ico--tuner" aria-hidden="true"></div>
+          </button>
+
+          <div class="practice-timerlane" aria-label="Practice timer">
+            <div class="practice-readout">
+              <div class="practice-label">PRACTICE</div>
+              <div class="practice-time clock--transport" id="practice-timer">00:00</div>
+            </div>
+
+            <div class="practice-controls" aria-label="Timer controls">
+              <button class="daw-btn practice-btn" id="timer-start" type="button" aria-label="Start timer">START</button>
+              <button class="daw-btn practice-btn" id="timer-reset" type="button" aria-label="Reset timer">RESET</button>
+            </div>
+          </div>
+
+          <!-- Transport accent LEDs (blue / green / purple) -->
+          <div class="transport-leds" aria-label="Transport color">
+            <button class="led-btn led-blue" data-transport-color="blue" type="button" aria-label="Blue transport"></button>
+            <button class="led-btn led-green" data-transport-color="green" type="button" aria-label="Green transport"></button>
+            <button class="led-btn led-purple" data-transport-color="purple" type="button" aria-label="Purple transport"></button>
+          </div>
+
+        </div>
+
+      </div>
+    </div>
+
+    <!-- RIGHT COLUMN (SESSION CORNER): actions moved here to sit above Session Tools -->
+    <div class="transport-corner" aria-label="Session actions">
+      <div class="topbar-actions">
+        <button class="topbar-signin" id="sign-in" type="button" aria-label="Sign in">
+          <span class="profile-icon" aria-hidden="true"></span>
+          SIGN IN
+        </button>
+
+        <button class="topbar-lock" id="lock-console" type="button" aria-label="Lock console">
+          <span class="lock-icon" aria-hidden="true"></span>
+          LOCK
+        </button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- CONSOLE GRID -->
+  <div class="console-grid">
+
+    <!-- LEFT : GEAR GUIDE -->
+    <nav class="nav gear-tracks" id="gear-panel">
+      <div class="nav-head" id="gear-title">GEAR GUIDE</div>
+
+      <button class="gear-track" type="button"
+        onclick="window.open('https://www.powerchordtheory.com/gear-guide/choosing-your-first-instrument/','pct_gear','width=1100,height=900')">
+        <div class="track-icon"><img src="/assets/img/first_instrument.png" alt=""></div>
+        <div class="track-name">Instrument</div>
+        <div class="track-color" style="background:#ff4d6d"></div>
+      </button>
+
+      <button class="gear-track" type="button"
+        onclick="window.open('https://www.powerchordtheory.com/gear-guide/bass-buying-basics/','pct_gear','width=1100,height=900')">
+        <div class="track-icon"><img src="/assets/img/bass.png" alt=""></div>
+        <div class="track-name">Bass</div>
+        <div class="track-color" style="background:#22c1c3"></div>
+      </button>
+
+      <button class="gear-track" type="button"
+        onclick="window.open('https://www.powerchordtheory.com/gear-guide/guitar-buying-basics/','pct_gear','width=1100,height=900')">
+        <div class="track-icon"><img src="/assets/img/guitar.png" alt=""></div>
+        <div class="track-name">Guitar</div>
+        <div class="track-color" style="background:#6a5acd"></div>
+      </button>
+
+      <button class="gear-track" type="button"
+        onclick="window.open('https://www.powerchordtheory.com/gear-guide/budget-guidance/','pct_gear','width=1100,height=900')">
+        <div class="track-icon"><img src="/assets/img/budget.png" alt=""></div>
+        <div class="track-name">Budget</div>
+        <div class="track-color" style="background:#ffa500"></div>
+      </button>
+
+      <button class="gear-track" type="button"
+        onclick="window.open('https://www.powerchordtheory.com/gear-guide/comfort-and-fit/','pct_gear','width=1100,height=900')">
+        <div class="track-icon"><img src="/assets/img/fit.png" alt=""></div>
+        <div class="track-name">Fit</div>
+        <div class="track-color" style="background:#4caf50"></div>
+      </button>
+
+      <button class="gear-track" type="button"
+        onclick="window.open('https://www.powerchordtheory.com/gear-guide/amps-headphones-and-interfaces/','pct_gear','width=1100,height=900')">
+        <div class="track-icon"><img src="/assets/img/amp.png" alt=""></div>
+        <div class="track-name">Amps</div>
+        <div class="track-color" style="background:#ff7043"></div>
+      </button>
+
+      <button class="gear-track" type="button"
+        onclick="window.open('https://www.powerchordtheory.com/gear-guide/accessories-you-actually-need/','pct_gear','width=1100,height=900')">
+        <div class="track-icon"><img src="/assets/img/accessories.png" alt=""></div>
+        <div class="track-name">Accessories</div>
+        <div class="track-color" style="background:#00bcd4"></div>
+      </button>
+
+      <button class="gear-track" type="button"
+        onclick="window.open('https://www.powerchordtheory.com/gear-guide/buying-used/','pct_gear','width=1100,height=900')">
+        <div class="track-icon"><img src="/assets/img/guitar-other.png" alt=""></div>
+        <div class="track-name">Used</div>
+        <div class="track-color" style="background:#9c27b0"></div>
+      </button>
+    </nav>
+
+    <!-- CENTER : BOARD + LEARN -->
+    <main class="center">
+
+      <!-- BOARD (WELCOME) -->
+      <section class="panel" id="board-panel">
+        <div class="panel-title">WELCOME</div>
+        <div class="panel-body">
+          <ul class="panel-list">
+            <li>Make sure to bookmark this site</li>
+            <li>Use invited Google account only</li>
+            <li>Sign in to Session Space</li>
+            <li>Always check for new content before every session</li>
+            <li>A little practice everyday is better than none, even 15 minutes!</li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- LEARN -->
+      <section class="panel" id="learn-panel">
+        <div class="panel-title">LEARN</div>
+
+        <div class="panel-body">
+
+          <details class="learn-cat" open>
+            <summary class="learn-sum">
+              Orientation Control and Readiness
+              <span class="learn-dot" style="background:#4fb0ff" aria-hidden="true"></span>
+            </summary>
+            <div class="learn-links">
+              <button class="learn-link" type="button" onclick="window.open('https://www.powerchordtheory.com/learn/basic-hand-interaction-and-making-sound/','pct_learn','width=1200,height=900')">Basic Hand Interaction and Making Sound</button>
+              <button class="learn-link" type="button" onclick="window.open('https://www.powerchordtheory.com/learn/parts-of-the-instrument/','pct_learn','width=1200,height=900')">Parts of the Instrument</button>
+              <button class="learn-link" type="button" onclick="window.open('https://www.powerchordtheory.com/learn/physical-setup/','pct_learn','width=1200,height=900')">Basic Physical Setup</button>
+              <button class="learn-link" type="button" onclick="window.open('https://www.powerchordtheory.com/learn/signal-flow-cables-and-connections/','pct_learn','width=1200,height=900')">Signal Flow, Cables, and Connections</button>
+              <button class="learn-link" type="button" onclick="window.open('https://www.powerchordtheory.com/learn/tunning-fundamentals/','pct_learn','width=1200,height=900')">Tuning Fundamentals and Open Strings</button>
+            </div>
+          </details>
+
+          <details class="learn-cat">
+            <summary class="learn-sum">
+              Groove and Power
+              <span class="learn-dot" style="background:#ffa500" aria-hidden="true"></span>
+            </summary>
+            <div class="learn-links">
+              <button class="learn-link" type="button" onclick="window.open('https://www.powerchordtheory.com/learn/single-note-groove-foundations/','pct_learn','width=1200,height=900')">Single Note Groove Foundations</button>
+              <button class="learn-link" type="button" onclick="window.open('https://www.powerchordtheory.com/learn/pulse-and-time-awareness/','pct_learn','width=1200,height=900')">Pulse and Time Awareness</button>
+              <button class="learn-link" type="button" onclick="window.open('https://www.powerchordtheory.com/learn/introduction-to-power-shapes/','pct_learn','width=1200,height=900')">Introduction to Power Shapes</button>
+              <button class="learn-link" type="button" onclick="window.open('https://www.powerchordtheory.com/learn/groove-with-power-shapes/','pct_learn','width=1200,height=900')">Groove With Power Shapes</button>
+              <button class="learn-link" type="button" onclick="window.open('https://www.powerchordtheory.com/learn/basic-rhythmic-consistency-and-attack/','pct_learn','width=1200,height=900')">Basic Rhythmic Consistency and Attack</button>
+            </div>
+          </details>
+
+          <details class="learn-cat">
+            <summary class="learn-sum">
+              Time Space and Feel
+              <span class="learn-dot" style="background:#22c1c3" aria-hidden="true"></span>
+            </summary>
+            <div class="learn-links">
+              <button class="learn-link" type="button" onclick="window.open('https://www.powerchordtheory.com/learn/space-and-note-length/','pct_learn','width=1200,height=900')">Space and Note Length</button>
+              <button class="learn-link" type="button" onclick="window.open('https://www.powerchordtheory.com/learn/rests-silence-and-musical-breathing/','pct_learn','width=1200,height=900')">Rests, Silence, and Musical Breathing</button>
+              <button class="learn-link" type="button" onclick="window.open('https://www.powerchordtheory.com/learn/subdivision-and-internal-grid/','pct_learn','width=1200,height=900')">Subdivision and Internal Grid</button>
+              <button class="learn-link" type="button" onclick="window.open('https://www.powerchordtheory.com/learn/feel-versus-timing/','pct_learn','width=1200,height=900')">Feel Versus Timing</button>
+              <button class="learn-link" type="button" onclick="window.open('https://www.powerchordtheory.com/learn/note-placement-and-micro-timing/','pct_learn','width=1200,height=900')">Note Placement and Micro Timing</button>
+              <button class="learn-link" type="button" onclick="window.open('https://www.powerchordtheory.com/learn/dynamic-control-and-touch/','pct_learn','width=1200,height=900')">Dynamic Control and Touch</button>
+              <button class="learn-link" type="button" onclick="window.open('https://www.powerchordtheory.com/learn/groove-across-tempo-changes/','pct_learn','width=1200,height=900')">Groove Across Tempo Changes</button>
+            </div>
+          </details>
+
+          <details class="learn-cat">
+            <summary class="learn-sum">
+              Tonal Awareness and Direction
+              <span class="learn-dot" style="background:#9c27b0" aria-hidden="true"></span>
+            </summary>
+            <div class="learn-links">
+              <button class="learn-link" type="button" onclick="window.open('https://www.powerchordtheory.com/learn/hearing-tonal-centers/','pct_learn','width=1200,height=900')">Hearing Tonal Centers</button>
+              <button class="learn-link" type="button" onclick="window.open('https://www.powerchordtheory.com/learn/tension-and-resolution-by-ear/','pct_learn','width=1200,height=900')">Tension and Resolution by Ear</button>
+              <button class="learn-link" type="button" onclick="window.open('https://www.powerchordtheory.com/learn/directional-playing-and-note-choice/','pct_learn','width=1200,height=900')">Directional Playing and Note Choice</button>
+              <button class="learn-link" type="button" onclick="window.open('https://www.powerchordtheory.com/learn/stable-notes-vs-color-notes/','pct_learn','width=1200,height=900')">Stable Notes vs Color Notes</button>
+              <button class="learn-link" type="button" onclick="window.open('https://www.powerchordtheory.com/learn/phrase-direction-and-musical-sentences/','pct_learn','width=1200,height=900')">Phrase Direction and Musical Sentences</button>
+              <button class="learn-link" type="button" onclick="window.open('https://www.powerchordtheory.com/learn/arpeggios-and-chord-tones/','pct_learn','width=1200,height=900')">Arpeggios and Chord Tones</button>
+              <button class="learn-link" type="button" onclick="window.open('https://www.powerchordtheory.com/learn/common-progressions-and-movement/','pct_learn','width=1200,height=900')">Common Progressions and Movement</button>
+            </div>
+          </details>
+
+          <details class="learn-cat">
+            <summary class="learn-sum">
+              Harmony as Function
+              <span class="learn-dot" style="background:#6a5acd" aria-hidden="true"></span>
+            </summary>
+            <div class="learn-links">
+              <button class="learn-link" type="button" onclick="window.open('https://www.powerchordtheory.com/learn/what-harmony-does/','pct_learn','width=1200,height=900')">What Harmony Does</button>
+              <button class="learn-link" type="button" onclick="window.open('https://www.powerchordtheory.com/learn/chords-as-function-not-shapes/','pct_learn','width=1200,height=900')">Chords as Function, Not Shapes</button>
+              <button class="learn-link" type="button" onclick="window.open('https://www.powerchordtheory.com/learn/scales-as-harmonic-tools/','pct_learn','width=1200,height=900')">Scales as Harmonic Tools</button>
+            </div>
+          </details>
+
+          <details class="learn-cat">
+            <summary class="learn-sum">
+              Vocabulary and Style
+              <span class="learn-dot" style="background:#00bcd4" aria-hidden="true"></span>
+            </summary>
+            <div class="learn-links">
+              <button class="learn-link" type="button" onclick="window.open('https://www.powerchordtheory.com/learn/groove-language-across-styles/','pct_learn','width=1200,height=900')">Groove Language Across Styles</button>
+              <button class="learn-link" type="button" onclick="window.open('https://www.powerchordtheory.com/learn/riffs-motifs-and-reusable-ideas/','pct_learn','width=1200,height=900')">Riffs, Motifs, and Reusable Ideas</button>
+              <button class="learn-link" type="button" onclick="window.open('https://www.powerchordtheory.com/learn/articulation-and-style-identity/','pct_learn','width=1200,height=900')">Articulation and Style Identity</button>
+              <button class="learn-link" type="button" onclick="window.open('https://www.powerchordtheory.com/learn/tone-choices-and-context/','pct_learn','width=1200,height=900')">Tone Choices and Context</button>
+              <button class="learn-link" type="button" onclick="window.open('https://www.powerchordtheory.com/learn/listening-as-vocabulary-development/','pct_learn','width=1200,height=900')">Listening as Vocabulary Development</button>
+            </div>
+          </details>
+
+          <details class="learn-cat">
+            <summary class="learn-sum">
+              Musical Independence and Collaboration
+              <span class="learn-dot" style="background:#ff7043" aria-hidden="true"></span>
+            </summary>
+            <div class="learn-links">
+              <button class="learn-link" type="button" onclick="window.open('https://www.powerchordtheory.com/learn/learning-songs-efficiently/','pct_learn','width=1200,height=900')">Learning Songs Efficiently</button>
+              <button class="learn-link" type="button" onclick="window.open('https://www.powerchordtheory.com/learn/playing-with-other-musicians/','pct_learn','width=1200,height=900')">Playing With Other Musicians</button>
+              <button class="learn-link" type="button" onclick="window.open('https://www.powerchordtheory.com/learn/improvisation-with-intention/','pct_learn','width=1200,height=900')">Improvisation With Intention</button>
+              <button class="learn-link" type="button" onclick="window.open('https://www.powerchordtheory.com/learn/following-form-and-structure/','pct_learn','width=1200,height=900')">Following Form and Structure</button>
+              <button class="learn-link" type="button" onclick="window.open('https://www.powerchordtheory.com/learn/musical-decision-making-in-real-time/','pct_learn','width=1200,height=900')">Musical Decision Making in Real Time</button>
+            </div>
+          </details>
+
+        </div>
+      </section>
+
+    </main>
+
+    <!-- RIGHT : SESSION TOOLS -->
+    <aside class="right">
+      <div class="right-head">SESSION TOOLS</div>
+
+      <div class="right-panel">
+        <button class="tool-btn" id="tool-classroom" type="button">
+          <span class="tool-ico" aria-hidden="true">
+            <img class="tool-ico-img" src="/assets/img/session-space.png" alt="">
+          </span>
+          <span class="tool-label">LAUNCH SESSION SPACE</span>
+        </button>
+
+        <button class="tool-btn" id="tool-meet" type="button">
+          <span class="tool-ico" aria-hidden="true">
+            <img class="tool-ico-img" src="/assets/img/start-session.png" alt="">
+          </span>
+          <span class="tool-label">START REMOTE SESSION</span>
+        </button>
+
+        <button class="tool-btn" id="tool-keep" type="button">
+          <span class="tool-ico" aria-hidden="true">
+            <img class="tool-ico-img" src="/assets/img/session-notes.png" alt="">
+          </span>
+          <span class="tool-label">SESSION NOTES</span>
+        </button>
+      </div>
+    </aside>
+
+  </div>
+
+</div>
+
+<script src="/assets/js/app.js"></script>
+<script src="/assets/js/console.js"></script>
