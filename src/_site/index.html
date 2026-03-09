@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Login</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="/assets/css/app.css">
+</head>
+<body>
+  
+<main class="gate">
+  <section class="gate-card" aria-label="Access Gate">
+
+    <div class="gate-top">
+      <img
+        src="/assets/img/seal-oneonone.png"
+        alt="One On One Studio Seal"
+        class="seal-img"
+      />
+
+      <div class="gate-title">
+        <div class="gate-kicker">ONE ON ONE</div>
+        <div class="gate-sub">STUDIO CONSOLE</div>
+      </div>
+    </div>
+
+    <!-- REAL FORM so app.js gate logic works -->
+    <form class="gate-form" data-gate-code="studio" autocomplete="off">
+
+      <label class="gate-label" for="access-code">ACCESS CODE</label>
+
+      <div class="gate-row">
+        <input
+          type="password"
+          id="access-code"
+          name="access-code"
+          autocomplete="off"
+          spellcheck="false"
+        />
+
+        <button id="unlock" type="submit">
+          ENTER
+        </button>
+      </div>
+
+      <div id="error" class="gate-error" role="status" aria-live="polite"></div>
+
+    </form>
+
+    <div class="gate-foot">
+      <span class="gate-muted">Sign-In To Access Console.</span>
+    </div>
+
+  </section>
+</main>
+
+  <script type="module" src="/assets/js/app.js"></script>
+</body>
+</html>
+
+<script src="/assets/js/console.js" defer></script>
