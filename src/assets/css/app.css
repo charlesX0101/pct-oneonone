@@ -141,7 +141,7 @@ button{font-weight:750;}
 
 .gate-error{min-height:18px;font-size:13px;color:#ff6b6b}
 .gate-foot{display:flex;justify-content:center}
-.gate-muted{font-size:12px;opacity:.45}
+.gate-muted{font-size:12px;opacity:.30}
 
 /* -------------------------
    Warmup Splash (Logic-style)
@@ -1544,3 +1544,977 @@ button{font-weight:750;}
 
 /* keeps the text vertically centered nicely when wrapping */
 .tool-btn{align-items:center;}
+
+
+/* =================================
+   MOBILE / TABLET CONSOLE
+================================= */
+
+.console-shell--desktop{display:block}
+.console-shell--mobile{display:none}
+
+/* ---------- MOBILE SHELL BASE ---------- */
+
+.console-shell--mobile{
+  --transport-main-btn-w:88px;
+  --transport-aux-btn-w:58px;
+  --transport-main-btn-h:46px;
+  --transport-aux-btn-h:24px;
+  --transport-btn-gap:8px;
+  --transport-controls-w:calc(var(--transport-main-btn-w) + (var(--transport-aux-btn-w) * 2) + (var(--transport-btn-gap) * 2));
+  --transport-toprail-w:244px;
+  --transport-panel-max:760px;
+  --practice-readout-min:86px;
+
+  min-height:100vh;
+  background:var(--bg);
+  color:var(--text);
+  position:relative;
+  overflow:hidden;
+}
+
+.console-shell--mobile > *{
+  position:relative;
+  z-index:1;
+}
+
+/* ---------- PRACTICE ANCHOR / TRANSPORT ---------- */
+
+.mobile-practice-anchor{
+  display:grid;
+  grid-template-rows:auto auto auto;
+  gap:10px;
+  padding:12px;
+  border-bottom:1px solid var(--border);
+  background:
+    linear-gradient(to bottom, rgba(255,255,255,.03), rgba(0,0,0,.10)),
+    var(--bar);
+}
+
+.mobile-practice-main{
+  display:block;
+  min-width:0;
+}
+
+.mobile-practice-toprow{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) var(--transport-toprail-w);
+  gap:8px;
+  align-items:stretch;
+  min-width:0;
+}
+
+/* ---------- TOP ROW: METER ---------- */
+
+.mobile-meterbridge{
+  min-width:0;
+  min-height:54px;
+  display:flex;
+  align-items:flex-end;
+  padding:9px 8px 8px;
+  overflow:hidden;
+  background:var(--window);
+  border:1px solid var(--window-border);
+  box-shadow:
+    inset 0 1px 0 var(--window-inset),
+    inset 0 -1px 0 rgba(0,0,0,.55);
+}
+
+.mobile-meterbridge .meters{
+  width:100%;
+  height:24px;
+  display:flex;
+  align-items:flex-end;
+  gap:2px;
+  min-width:0;
+}
+
+.mobile-meterbridge .meter{
+  flex:1 1 0;
+  min-width:0;
+}
+
+/* ---------- TOP ROW: PRACTICE TIMER ---------- */
+
+.mobile-practice-timerlane{
+  width:100%;
+  min-width:0;
+  min-height:54px;
+  display:grid;
+  grid-template-columns:minmax(var(--practice-readout-min),1fr) var(--transport-aux-btn-w) var(--transport-aux-btn-w);
+  grid-template-rows:auto auto;
+  grid-template-areas:
+    "readout icons icons"
+    "readout start reset";
+  column-gap:var(--transport-btn-gap);
+  row-gap:5px;
+  align-items:stretch;
+  padding:8px 10px 8px 12px;
+  position:relative;
+  overflow:hidden;
+  background:var(--window);
+  border:1px solid var(--window-border);
+  box-shadow:
+    inset 0 1px 0 var(--window-inset),
+    inset 0 -1px 0 rgba(0,0,0,.55);
+}
+
+.mobile-practice-timerlane .practice-readout{
+  grid-area:readout;
+  min-width:0;
+  align-self:start;
+  display:flex;
+  flex-direction:column;
+  justify-content:flex-start;
+  padding-top:1px;
+}
+
+.mobile-practice-timerlane .practice-label{
+  margin:0 0 4px;
+}
+
+.mobile-practice-timerlane .practice-time{
+  font-size:24px;
+  line-height:1;
+}
+
+.practice-controls-wrap{
+  display:contents;
+}
+
+.practice-admin-icons{
+  grid-area:icons;
+  display:flex;
+  align-items:flex-start;
+  justify-content:flex-end;
+  gap:6px;
+  min-width:0;
+  min-height:16px;
+  align-self:start;
+  padding-right:4px;
+  overflow:visible;
+}
+
+.transport-icon-btn{
+  width:16px;
+  height:16px;
+  min-width:16px;
+  min-height:16px;
+  padding:0;
+  margin:0;
+  border:none;
+  background:transparent;
+  color:var(--text);
+  opacity:.78;
+  cursor:pointer;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.transport-icon-btn:hover{
+  opacity:1;
+}
+
+.transport-icon-btn:focus-visible{
+  outline:1px solid rgba(255,255,255,.45);
+  outline-offset:2px;
+  border-radius:3px;
+}
+
+.transport-icon{
+  width:14px;
+  height:14px;
+  display:block;
+  background:currentColor;
+  opacity:.92;
+}
+
+.transport-icon--signin{
+  -webkit-mask:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='black'><path d='M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zm0 2c-4.42 0-8 2.24-8 5v1h16v-1c0-2.76-3.58-5-8-5z'/></svg>") center / contain no-repeat;
+          mask:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='black'><path d='M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zm0 2c-4.42 0-8 2.24-8 5v1h16v-1c0-2.76-3.58-5-8-5z'/></svg>") center / contain no-repeat;
+}
+
+.transport-icon--lock{
+  -webkit-mask:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='black'><path d='M17 9h-1V7a4 4 0 1 0-8 0v2H7a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-8a2 2 0 0 0-2-2zm-6 0V7a2 2 0 1 1 4 0v2h-4z'/></svg>") center / contain no-repeat;
+          mask:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='black'><path d='M17 9h-1V7a4 4 0 1 0-8 0v2H7a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-8a2 2 0 0 0-2-2zm-6 0V7a2 2 0 1 1 4 0v2h-4z'/></svg>") center / contain no-repeat;
+}
+
+.mobile-practice-timerlane .practice-controls{
+  display:contents;
+}
+
+.mobile-practice-timerlane #mobile-timer-start,
+.mobile-practice-timerlane #mobile-timer-reset{
+  width:var(--transport-aux-btn-w);
+  min-width:var(--transport-aux-btn-w);
+  max-width:var(--transport-aux-btn-w);
+  height:var(--transport-aux-btn-h);
+  min-height:var(--transport-aux-btn-h);
+  max-height:var(--transport-aux-btn-h);
+  font-size:9px;
+  line-height:1;
+  padding:0 6px;
+  align-self:end;
+  justify-self:stretch;
+}
+
+.mobile-practice-timerlane #mobile-timer-start{grid-area:start}
+.mobile-practice-timerlane #mobile-timer-reset{grid-area:reset}
+
+/* ---------- METRONOME ---------- */
+
+.mobile-metronome-module{
+  width:100%;
+  min-width:0;
+  min-height:102px;
+  height:auto;
+  display:grid;
+  grid-template-columns:minmax(136px,1fr) var(--transport-controls-w);
+  gap:8px;
+  align-items:stretch;
+  padding:8px 10px 8px 12px;
+}
+
+.mobile-metronome-module .metronome-display{
+  min-width:0;
+  display:grid;
+  grid-template-rows:12px 1fr auto;
+  align-items:center;
+  justify-items:center;
+  padding:4px 0 3px;
+}
+
+.mobile-metronome-module .metronome-bpm{
+  font-size:36px;
+  line-height:1;
+}
+
+.mobile-metronome-module .metronome-meta{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:12px;
+  font-size:11px;
+}
+
+.mobile-metronome-module .metronome-controls{
+  min-width:0;
+  width:var(--transport-controls-w);
+  display:grid;
+  grid-template-columns:var(--transport-main-btn-w) var(--transport-aux-btn-w) var(--transport-aux-btn-w);
+  grid-template-areas:
+    "start down up"
+    "tap ts mode";
+  gap:var(--transport-btn-gap);
+  align-content:start;
+  align-items:start;
+  justify-items:start;
+}
+
+.mobile-metronome-module #mobile-metronome-start{grid-area:start}
+.mobile-metronome-module #mobile-metronome-bpm-down{grid-area:down}
+.mobile-metronome-module #mobile-metronome-bpm-up{grid-area:up}
+.mobile-metronome-module #mobile-metronome-tap{grid-area:tap}
+.mobile-metronome-module #mobile-metronome-timesig-select{grid-area:ts}
+.mobile-metronome-module #mobile-metronome-mode-select{grid-area:mode}
+
+.mobile-metronome-module .metronome-controls > #mobile-metronome-start,
+.mobile-metronome-module .metronome-controls > #mobile-metronome-tap{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  width:var(--transport-main-btn-w);
+  min-width:var(--transport-main-btn-w);
+  max-width:var(--transport-main-btn-w);
+  height:var(--transport-main-btn-h);
+  min-height:var(--transport-main-btn-h);
+  max-height:var(--transport-main-btn-h);
+  padding:0 8px;
+  margin:0;
+  font-size:11px;
+  line-height:1;
+  border-radius:6px;
+  aspect-ratio:auto;
+  transform:none;
+}
+
+.mobile-metronome-module .metronome-controls > #mobile-metronome-bpm-down,
+.mobile-metronome-module .metronome-controls > #mobile-metronome-bpm-up,
+.mobile-metronome-module .metronome-controls > #mobile-metronome-timesig-select,
+.mobile-metronome-module .metronome-controls > #mobile-metronome-mode-select{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  width:var(--transport-aux-btn-w);
+  min-width:var(--transport-aux-btn-w);
+  max-width:var(--transport-aux-btn-w);
+  height:var(--transport-aux-btn-h);
+  min-height:var(--transport-aux-btn-h);
+  max-height:var(--transport-aux-btn-h);
+  padding:0 6px;
+  margin:0;
+  font-size:9px;
+  line-height:1;
+  border-radius:6px;
+  aspect-ratio:auto;
+  transform:none;
+}
+
+/* Metronome START running state */
+
+#mobile-metronome-start.is-running{
+  color:#fff;
+  border-color:var(--transport-accent);
+  background:var(--transport-accent);
+  box-shadow:
+    0 0 8px var(--transport-accent-dim),
+    inset 0 1px 0 rgba(255,255,255,.25),
+    inset 0 -1px 0 rgba(0,0,0,.45);
+}
+
+/* ---------- LED + TICKER ROW ---------- */
+
+.mobile-console-signalrow{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) 36px;
+  gap:8px;
+  align-items:stretch;
+}
+
+.mobile-tickerlane{
+  min-height:42px;
+  display:flex;
+  align-items:center;
+  padding:0 12px;
+  overflow:hidden;
+  background:var(--window);
+  border:1px solid var(--window-border);
+  box-shadow:
+    inset 0 1px 0 var(--window-inset),
+    inset 0 -1px 0 rgba(0,0,0,.55);
+}
+
+.mobile-tickerlane .ticker{
+  width:100%;
+  min-width:0;
+  overflow:hidden;
+}
+
+.mobile-tickerlane .ticker-track{
+  width:max-content;
+  min-width:100%;
+}
+
+.mobile-practice-leds-row{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:7px;
+  padding:7px 0;
+  background:var(--window);
+  border:1px solid var(--window-border);
+  box-shadow:
+    inset 0 1px 0 var(--window-inset),
+    inset 0 -1px 0 rgba(0,0,0,.55);
+}
+
+.mobile-practice-leds-row .led-btn{
+  width:18px;
+  height:18px;
+  min-width:18px;
+  min-height:18px;
+}
+
+/* ---------- HANDEDNESS SWITCH ROW ---------- */
+
+.mobile-hand-switch-row{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:8px 12px 4px;
+  position:relative;
+  z-index:2;
+}
+
+.mobile-hand-switch-row::before{
+  content:"";
+  position:absolute;
+  width:78px;
+  height:28px;
+  border:1px solid rgba(255,255,255,.12);
+  background:rgba(255,255,255,.05);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.08),
+    inset 0 -1px 0 rgba(0,0,0,.35);
+  border-radius:6px;
+  z-index:0;
+}
+
+.mobile-hand-switch-row > *{
+  position:relative;
+  z-index:1;
+}
+
+.mobile-hand-switch-btn{
+  width:30px;
+  min-width:30px;
+  height:22px;
+  padding:0;
+  margin:0 6px;
+  font-size:13px;
+  line-height:1;
+  border-radius:4px;
+}
+
+/* ---------- DRAWERS / DARKER MOBILE FIELD ---------- */
+
+.mobile-console-home{
+  display:grid;
+  gap:10px;
+  padding:12px;
+  position:relative;
+  z-index:1;
+  background:transparent;
+  isolation:isolate;
+  overflow:visible;
+}
+
+.mobile-console-home::before{
+  content:"";
+  position:absolute;
+  left:50%;
+  top:148px;
+  width:min(280px, 52vw);
+  height:min(280px, 52vw);
+  transform:translateX(-50%);
+  background:url("/assets/img/pick-grey.png") center / contain no-repeat;
+  opacity:.06;
+  filter:
+    contrast(1.02)
+    drop-shadow(0 0 10px var(--logic-blue-dim))
+    drop-shadow(0 0 18px rgba(79,176,255,.12));
+  pointer-events:none;
+  z-index:0;
+}
+
+.mobile-console-home > *{
+  position:relative;
+  z-index:1;
+}
+
+.mobile-console-drawers{
+  align-content:start;
+}
+
+.mobile-home-section{
+  display:grid;
+  gap:6px;
+  position:relative;
+  z-index:1;
+}
+
+.mobile-section-head{
+  position:relative;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  min-height:30px;
+  text-align:center;
+}
+
+.mobile-section-head .panel-title{
+  width:100%;
+  margin:0;
+  text-align:center;
+  pointer-events:none;
+}
+
+.mobile-section-toggle{
+  position:absolute;
+  right:0;
+  height:30px;
+  min-width:58px;
+  padding:0 10px;
+  border-radius:4px;
+  font-size:10px;
+}
+
+.mobile-section-body[hidden]{
+  display:none !important;
+}
+
+.mobile-section-body{
+  position:relative;
+  z-index:1;
+  background:rgba(10,12,16,.42);
+  backdrop-filter:blur(1px);
+}
+
+.mobile-panel{
+  padding:14px;
+  background:rgba(10,12,16,.34);
+}
+
+.mobile-panel .panel-body{
+  margin-top:0;
+}
+
+.mobile-home-section .right-panel{
+  padding:0;
+  border:none;
+  background:rgba(10,12,16,.34);
+}
+
+.mobile-home-section .tool-btn{
+  height:66px;
+}
+
+.mobile-home-section .tool-btn + .tool-btn{
+  border-top:none;
+}
+
+.mobile-home-section .gear-track + .gear-track{
+  border-top:none;
+}
+
+.mobile-gear-list{
+  display:grid;
+  gap:0;
+  position:relative;
+  z-index:1;
+  background:rgba(10,12,16,.34);
+}
+
+.mobile-home-section .learn-cat{
+  margin:10px 0 0;
+}
+
+.mobile-home-section .learn-sum{
+  min-height:52px;
+  height:auto;
+  padding:10px 10px;
+}
+
+.mobile-home-section .learn-links{
+  padding:10px 12px 12px;
+}
+
+/* ---------- HANDEDNESS ---------- */
+
+.console-shell--mobile.is-left-handed .mobile-practice-toprow{
+  grid-template-columns:var(--transport-toprail-w) minmax(0,1fr);
+}
+
+.console-shell--mobile.is-left-handed .mobile-meterbridge{
+  order:2;
+}
+
+.console-shell--mobile.is-left-handed .mobile-practice-timerlane{
+  order:1;
+}
+
+.console-shell--mobile.is-left-handed .mobile-metronome-module{
+  grid-template-columns:var(--transport-controls-w) minmax(136px,1fr);
+}
+
+.console-shell--mobile.is-left-handed .mobile-metronome-module .metronome-display{
+  order:2;
+}
+
+.console-shell--mobile.is-left-handed .mobile-metronome-module .metronome-controls{
+  order:1;
+}
+
+.console-shell--mobile.is-left-handed .mobile-console-signalrow{
+  grid-template-columns:36px minmax(0,1fr);
+}
+
+.console-shell--mobile.is-left-handed .mobile-tickerlane{
+  order:2;
+}
+
+.console-shell--mobile.is-left-handed .mobile-practice-leds-row{
+  order:1;
+}
+
+.console-shell--mobile.is-left-handed .mobile-section-toggle{
+  right:auto;
+  left:0;
+}
+
+/* ---------- BREAKPOINTS ---------- */
+
+@media (max-width:1100px){
+  .console-shell--desktop{display:none !important}
+  .console-shell--mobile{display:block !important}
+}
+
+@media (min-width:600px){
+  .mobile-practice-anchor{
+    width:min(100%, var(--transport-panel-max));
+    margin-inline:auto;
+  }
+
+  .mobile-meterbridge .meters{
+    height:18px;
+  }
+}
+
+@media (max-width:900px){
+  .console-shell--mobile{
+    --transport-main-btn-w:82px;
+    --transport-aux-btn-w:54px;
+    --transport-main-btn-h:42px;
+    --transport-toprail-w:230px;
+    --transport-controls-w:calc(var(--transport-main-btn-w) + (var(--transport-aux-btn-w) * 2) + (var(--transport-btn-gap) * 2));
+  }
+
+  .mobile-practice-timerlane .practice-time{
+    font-size:22px;
+  }
+
+  .mobile-metronome-module .metronome-bpm{
+    font-size:32px;
+  }
+}
+
+@media (max-width:680px){
+  .console-shell--mobile{
+    --transport-main-btn-w:74px;
+    --transport-aux-btn-w:50px;
+    --transport-main-btn-h:40px;
+    --transport-aux-btn-h:22px;
+    --transport-btn-gap:6px;
+    --transport-toprail-w:212px;
+    --transport-controls-w:calc(var(--transport-main-btn-w) + (var(--transport-aux-btn-w) * 2) + (var(--transport-btn-gap) * 2));
+    --practice-readout-min:74px;
+  }
+
+  .mobile-practice-anchor{
+    padding:10px;
+    gap:8px;
+  }
+
+  .mobile-practice-timerlane{
+    padding:8px 8px 8px 10px;
+  }
+
+  .mobile-practice-timerlane .practice-time{
+    font-size:20px;
+  }
+
+  .practice-admin-icons{
+    gap:4px;
+    padding-right:3px;
+  }
+
+  .transport-icon-btn{
+    width:15px;
+    height:15px;
+    min-width:15px;
+    min-height:15px;
+  }
+
+  .transport-icon{
+    width:13px;
+    height:13px;
+  }
+
+  .mobile-metronome-module{
+    min-height:90px;
+    padding:8px 9px 8px 10px;
+  }
+
+  .mobile-metronome-module .metronome-bpm{
+    font-size:29px;
+  }
+
+  .mobile-metronome-module .metronome-meta{
+    font-size:10px;
+    gap:10px;
+  }
+
+  .mobile-hand-switch-row::before{
+    width:74px;
+    height:26px;
+  }
+
+  .mobile-hand-switch-btn{
+    width:28px;
+    min-width:28px;
+    height:21px;
+    margin:0 5px;
+  }
+
+  .mobile-console-home{
+    padding:10px;
+    gap:10px;
+  }
+
+  .mobile-console-home::before{
+    top:144px;
+    width:min(250px,50vw);
+    height:min(250px,50vw);
+  }
+
+  .mobile-section-toggle{
+    min-width:54px;
+    height:28px;
+    padding:0 8px;
+    font-size:9px;
+  }
+
+  .mobile-home-section .tool-btn{
+    grid-template-columns:64px 1fr;
+    height:62px;
+  }
+
+  .mobile-home-section .tool-ico{
+    width:50px;
+    height:50px;
+  }
+
+  .mobile-home-section .tool-ico-img{
+    width:40px;
+    height:40px;
+  }
+
+  .mobile-home-section .gear-track{
+    grid-template-columns:64px 1fr 12px;
+    height:58px;
+  }
+
+  .mobile-home-section .gear-track .track-icon{
+    width:50px;
+    height:50px;
+  }
+
+  .mobile-home-section .gear-track .track-icon img{
+    width:42px;
+    height:42px;
+  }
+
+  .mobile-home-section .learn-link{
+    font-size:12px;
+  }
+
+  .mobile-meterbridge .meters{
+    height:17px;
+  }
+}
+
+@media (max-width:480px){
+  .console-shell--mobile{
+    --transport-main-btn-w:72px;
+    --transport-aux-btn-w:50px;
+    --transport-main-btn-h:38px;
+    --transport-aux-btn-h:22px;
+    --transport-btn-gap:6px;
+    --transport-toprail-w:210px;
+    --transport-controls-w:calc(var(--transport-main-btn-w) + (var(--transport-aux-btn-w) * 2) + (var(--transport-btn-gap) * 2));
+    --practice-readout-min:66px;
+  }
+
+  .mobile-practice-anchor{
+    padding:10px;
+  }
+
+  .mobile-meterbridge{
+    min-height:46px;
+    padding:8px 8px 7px;
+  }
+
+  .mobile-meterbridge .meters{
+    height:18px;
+  }
+
+  .mobile-practice-timerlane{
+    min-height:46px;
+    padding:7px 7px 7px 9px;
+  }
+
+  .mobile-practice-timerlane .practice-label{
+    margin-bottom:3px;
+  }
+
+  .mobile-practice-timerlane .practice-time{
+    font-size:18px;
+  }
+
+  .practice-admin-icons{
+    gap:3px;
+    min-height:14px;
+    padding-right:2px;
+  }
+
+  .transport-icon-btn{
+    width:14px;
+    height:14px;
+    min-width:14px;
+    min-height:14px;
+  }
+
+  .transport-icon{
+    width:12px;
+    height:12px;
+  }
+
+  .mobile-metronome-module{
+    min-height:86px;
+    padding:8px 8px 8px 9px;
+  }
+
+  .mobile-metronome-module .metronome-display{
+    padding:4px 0 2px;
+  }
+
+  .mobile-metronome-module .metronome-bpm{
+    font-size:27px;
+  }
+
+  .mobile-metronome-module .metronome-meta{
+    font-size:10px;
+    gap:8px;
+  }
+
+  .mobile-console-signalrow{
+    grid-template-columns:minmax(0,1fr) 30px;
+    gap:7px;
+  }
+
+  .mobile-practice-leds-row{
+    padding:6px 0;
+  }
+
+  .mobile-practice-leds-row .led-btn{
+    width:16px;
+    height:16px;
+    min-width:16px;
+    min-height:16px;
+  }
+
+  .mobile-tickerlane{
+    min-height:40px;
+    padding:0 10px;
+  }
+
+  .mobile-hand-switch-row{
+    padding:7px 10px 3px;
+  }
+
+  .mobile-hand-switch-row::before{
+    width:70px;
+    height:25px;
+  }
+
+  .mobile-hand-switch-btn{
+    width:27px;
+    min-width:27px;
+    height:20px;
+    margin:0 4px;
+    font-size:12px;
+  }
+
+  .mobile-console-home::before{
+    top:140px;
+    width:min(220px,48vw);
+    height:min(220px,48vw);
+  }
+}
+
+@media (max-width:375px){
+  .console-shell--mobile{
+    --transport-main-btn-w:68px;
+    --transport-aux-btn-w:48px;
+    --transport-main-btn-h:36px;
+    --transport-aux-btn-h:21px;
+    --transport-btn-gap:6px;
+    --transport-toprail-w:198px;
+    --transport-controls-w:calc(var(--transport-main-btn-w) + (var(--transport-aux-btn-w) * 2) + (var(--transport-btn-gap) * 2));
+    --practice-readout-min:60px;
+  }
+
+  .mobile-practice-anchor{
+    padding:8px;
+    gap:8px;
+  }
+
+  .mobile-practice-timerlane{
+    min-height:44px;
+    padding:7px 6px 7px 8px;
+  }
+
+  .mobile-practice-timerlane .practice-time{
+    font-size:17px;
+  }
+
+  .practice-admin-icons{
+    gap:2px;
+    padding-right:1px;
+  }
+
+  .transport-icon-btn{
+    width:13px;
+    height:13px;
+    min-width:13px;
+    min-height:13px;
+  }
+
+  .transport-icon{
+    width:11px;
+    height:11px;
+  }
+
+  .mobile-metronome-module{
+    min-height:82px;
+    padding:7px 7px 7px 8px;
+  }
+
+  .mobile-metronome-module .metronome-bpm{
+    font-size:25px;
+  }
+
+  .mobile-metronome-module .metronome-meta{
+    font-size:9px;
+    gap:7px;
+  }
+
+  .mobile-console-signalrow{
+    grid-template-columns:minmax(0,1fr) 28px;
+    gap:6px;
+  }
+
+  .mobile-practice-leds-row .led-btn{
+    width:15px;
+    height:15px;
+    min-width:15px;
+    min-height:15px;
+  }
+
+  .mobile-tickerlane{
+    min-height:38px;
+    padding:0 9px;
+  }
+
+  .mobile-hand-switch-row::before{
+    width:66px;
+    height:24px;
+  }
+
+  .mobile-hand-switch-btn{
+    width:25px;
+    min-width:25px;
+    height:19px;
+    margin:0 4px;
+    font-size:11px;
+  }
+
+  .mobile-console-home::before{
+    top:136px;
+    width:min(200px,46vw);
+    height:min(200px,46vw);
+    opacity:.05;
+  }
+}

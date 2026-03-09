@@ -1,12 +1,12 @@
-// console.js (DROP-IN) — RECOVERY STABLE + BUILT-IN METRONOME
-// Owns ONLY: console behavior (transport, timers/meters, popup window manager + tool popups).
-// Does NOT own: gate/warmup logic (app.js owns that).
-//
-// RECOVERY NOTE:
-// - Gear + Learn are temporarily left to their inline onclick handlers in console.njk
-// - This avoids takeover conflicts while restoring stability
-// - Session tools still use JS popup reuse logic
-// - Built-in metronome is now owned here
+// console.js (DROP-IN)
+// Owns:
+// - desktop console behavior
+// - mobile console behavior
+// - shared transport state
+// - shared practice timer
+// - shared metronome
+// - shared transport LEDs
+// - popup window manager for session tools
 
 (() => {
   const $ = (sel, root = document) => root.querySelector(sel);
@@ -32,6 +32,13 @@
     layout: "consoleLayout",
     gearCollapsed: "gearCollapsed",
     transportColor: "transportColor",
+    mobileBoardCollapsed: "mobileBoardCollapsed",
+    mobileSessionCollapsed: "mobileSessionCollapsed",
+    mobileLearnCollapsed: "mobileLearnCollapsed",
+    mobileGearCollapsed: "mobileGearCollapsed",
+    mobileHandedness: "mobileHandedness",
+    vipUnlocked: "oneonone_vip_unlocked",
+    sessionHint: "oneonone_session_space_hint",
   };
 
   const readLS = (k, fallback = null) => {
@@ -86,10 +93,8 @@
     if (!url) return null;
 
     const { name = key, w = 1200, h = 900, resizable = true, scrollbars = true } = opts;
-
     const existing = winMap.get(key);
     const alive = existing && !existing.closed;
-
     const { left, top } = calcCentered(w, h);
 
     const features = [
@@ -108,7 +113,7 @@
         forceFront(existing);
         return existing;
       } catch {
-        // Cross-origin edge cases — fall through to open fresh
+        // fall through
       }
     }
 
@@ -125,7 +130,6 @@
 
   function takeoverButton(el, handler) {
     if (!el) return;
-
     el.addEventListener("click", (e) => {
       e.preventDefault();
       e.stopPropagation();
@@ -133,10 +137,19 @@
     });
   }
 
+  function goToGate() {
+    try {
+      localStorage.removeItem(KEYS.vipUnlocked);
+      localStorage.removeItem(KEYS.sessionHint);
+    } catch {}
+
+    window.location.assign("/");
+  }
+
   function setupTopClock() {
-    const dateEl = $("#top-date");
-    const timeEl = $("#top-time");
-    if (!dateEl && !timeEl) return;
+    const dateEls = $$("#top-date");
+    const timeEls = $$("#top-time");
+    if (!dateEls.length && !timeEls.length) return;
 
     const tick = () => {
       const d = new Date();
@@ -156,8 +169,13 @@
         second: "2-digit",
       });
 
-      if (dateEl) dateEl.textContent = dateStr;
-      if (timeEl) timeEl.textContent = timeStr;
+      dateEls.forEach((el) => {
+        el.textContent = dateStr;
+      });
+
+      timeEls.forEach((el) => {
+        el.textContent = timeStr;
+      });
     };
 
     tick();
@@ -165,8 +183,8 @@
   }
 
   function setupUptime() {
-    const el = $("#console-uptime");
-    if (!el) return;
+    const els = $$("#console-uptime");
+    if (!els.length) return;
 
     const pad2 = (n) => String(n).padStart(2, "0");
     const format = (ms) => {
@@ -179,7 +197,10 @@
 
     const bootAt = performance.now();
     const tick = () => {
-      el.textContent = format(performance.now() - bootAt);
+      const value = format(performance.now() - bootAt);
+      els.forEach((el) => {
+        el.textContent = value;
+      });
     };
 
     tick();
@@ -187,10 +208,11 @@
   }
 
   function setupPracticeTimer() {
-    const readout = $("#practice-timer");
-    const startBtn = $("#timer-start");
-    const resetBtn = $("#timer-reset");
-    if (!readout || !startBtn || !resetBtn) return;
+    const readouts = [$("#practice-timer"), $("#mobile-practice-timer")].filter(Boolean);
+    const startBtns = [$("#timer-start"), $("#mobile-timer-start")].filter(Boolean);
+    const resetBtns = [$("#timer-reset"), $("#mobile-timer-reset")].filter(Boolean);
+
+    if (!readouts.length || !startBtns.length || !resetBtns.length) return;
 
     const pad2 = (n) => String(n).padStart(2, "0");
     const formatMS = (ms) => {
@@ -205,14 +227,20 @@
     let accum = 0;
     let raf = 0;
 
-    const setStartLabel = () => {
-      startBtn.textContent = running ? "PAUSE" : accum > 0 ? "RESUME" : "START";
+    const setStartLabels = () => {
+      const label = running ? "PAUSE" : accum > 0 ? "RESUME" : "START";
+      startBtns.forEach((btn) => {
+        btn.textContent = label;
+      });
     };
 
     const render = () => {
       const now = performance.now();
       const elapsed = running ? accum + (now - startAt) : accum;
-      readout.textContent = formatMS(elapsed);
+      const text = formatMS(elapsed);
+      readouts.forEach((el) => {
+        el.textContent = text;
+      });
     };
 
     const loop = () => {
@@ -224,7 +252,7 @@
       if (running) return;
       running = true;
       startAt = performance.now();
-      setStartLabel();
+      setStartLabels();
       if (!raf) raf = requestAnimationFrame(loop);
     };
 
@@ -232,7 +260,7 @@
       if (!running) return;
       running = false;
       accum += performance.now() - startAt;
-      setStartLabel();
+      setStartLabels();
       render();
       if (raf) {
         cancelAnimationFrame(raf);
@@ -244,23 +272,31 @@
       running = false;
       startAt = 0;
       accum = 0;
-      setStartLabel();
-      readout.textContent = "00:00";
+      setStartLabels();
+      readouts.forEach((el) => {
+        el.textContent = "00:00";
+      });
       if (raf) {
         cancelAnimationFrame(raf);
         raf = 0;
       }
     };
 
-    startBtn.addEventListener("click", () => {
-      if (running) pause();
-      else start();
+    startBtns.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        if (running) pause();
+        else start();
+      });
     });
 
-    resetBtn.addEventListener("click", reset);
+    resetBtns.forEach((btn) => {
+      btn.addEventListener("click", reset);
+    });
 
-    readout.textContent = "00:00";
-    setStartLabel();
+    readouts.forEach((el) => {
+      el.textContent = "00:00";
+    });
+    setStartLabels();
   }
 
   function setupBoardLearnCycle() {
@@ -479,62 +515,69 @@
     });
   }
 
-  function setupSessionTools() {
-    const classroom = $("#tool-classroom");
-    const meet = $("#tool-meet");
-    const keep = $("#tool-keep");
-    const tuner = $("#tool-tuner");
+  function bindPopupButtons(selectors, handler) {
+    selectors
+      .map((sel) => $(sel))
+      .filter(Boolean)
+      .forEach((el) => takeoverButton(el, handler));
+  }
 
-    if (classroom) {
-      takeoverButton(classroom, () => {
+  function setupSessionTools() {
+    bindPopupButtons(["#tool-classroom", "#mobile-tool-classroom"], () => {
+      openOrReuse(URLS.classroomLogin, "classroom", {
+        name: "CLASSROOM",
+        w: 1200,
+        h: 860,
+      });
+    });
+
+    bindPopupButtons(["#tool-meet", "#mobile-tool-meet"], () => {
+      openOrReuse(URLS.meet, "meet", {
+        name: "MEET",
+        w: 1200,
+        h: 860,
+      });
+    });
+
+    bindPopupButtons(["#tool-keep", "#mobile-tool-keep"], () => {
+      openOrReuse(URLS.keepLogin, "keep", {
+        name: "KEEP",
+        w: 1200,
+        h: 860,
+      });
+    });
+
+    bindPopupButtons(["#tool-tuner", "#mobile-tool-tuner"], () => {
+      openOrReuse(URLS.tuner, "tuner", {
+        name: "TUNER",
+        w: 980,
+        h: 760,
+      });
+    });
+  }
+
+  function setupSignIn() {
+    const signIns = [$("#sign-in"), $("#mobile-signin-toggle")].filter(Boolean);
+    if (!signIns.length) return;
+
+    signIns.forEach((signIn) => {
+      takeoverButton(signIn, () => {
         openOrReuse(URLS.classroomLogin, "classroom", {
           name: "CLASSROOM",
           w: 1200,
           h: 860,
         });
       });
-    }
-
-    if (meet) {
-      takeoverButton(meet, () => {
-        openOrReuse(URLS.meet, "meet", {
-          name: "MEET",
-          w: 1200,
-          h: 860,
-        });
-      });
-    }
-
-    if (keep) {
-      takeoverButton(keep, () => {
-        openOrReuse(URLS.keepLogin, "keep", {
-          name: "KEEP",
-          w: 1200,
-          h: 860,
-        });
-      });
-    }
-
-    if (tuner) {
-      takeoverButton(tuner, () => {
-        openOrReuse(URLS.tuner, "tuner", {
-          name: "TUNER",
-          w: 980,
-          h: 760,
-        });
-      });
-    }
+    });
   }
 
-  function setupSignIn() {
-    const signIn = $("#sign-in");
-    if (!signIn) return;
+  function setupLockButtons() {
+    const lockButtons = [$("#lock-console"), $("#mobile-lock-toggle")].filter(Boolean);
+    if (!lockButtons.length) return;
 
-    takeoverButton(signIn, () => {
-      openOrReuse(URLS.classroomLogin, "classroom", {
-        name: "CLASSROOM",
-        w: 1200,
-        h: 860,
+    lockButtons.forEach((lockButton) => {
+      takeoverButton(lockButton, () => {
+        goToGate();
       });
     });
   }
@@ -565,353 +608,475 @@
   }
 
   function setupMetronome() {
-  const bpmDisplay = $(".metronome-bpm");
-  const timeSigDisplay = $(".metronome-timesig");
-  const modeDisplay = $(".metronome-mode");
-  const led = $(".metronome-led");
+    const bpmDisplays = [$("#metronome-bpm"), $("#mobile-metronome-bpm")].filter(Boolean);
+    const timeSigDisplays = [$("#metronome-timesig"), $("#mobile-metronome-timesig")].filter(Boolean);
+    const modeDisplays = [$("#metronome-mode"), $("#mobile-metronome-mode")].filter(Boolean);
+    const leds = [$(".console-shell--desktop .metronome-led"), $(".console-shell--mobile .metronome-led")].filter(Boolean);
 
-  const startBtn = $("#metronome-start");
-  const bpmDownBtn = $("#metronome-bpm-down");
-  const bpmUpBtn = $("#metronome-bpm-up");
-  const tapBtn = $("#metronome-tap");
-  const tsBtn = $("#metronome-timesig-select");
-  const modeBtn = $("#metronome-mode-select");
+    const startBtns = [$("#metronome-start"), $("#mobile-metronome-start")].filter(Boolean);
+    const bpmDownBtns = [$("#metronome-bpm-down"), $("#mobile-metronome-bpm-down")].filter(Boolean);
+    const bpmUpBtns = [$("#metronome-bpm-up"), $("#mobile-metronome-bpm-up")].filter(Boolean);
+    const tapBtns = [$("#metronome-tap"), $("#mobile-metronome-tap")].filter(Boolean);
+    const tsBtns = [$("#metronome-timesig-select"), $("#mobile-metronome-timesig-select")].filter(Boolean);
+    const modeBtns = [$("#metronome-mode-select"), $("#mobile-metronome-mode-select")].filter(Boolean);
 
-  if (!bpmDisplay || !timeSigDisplay || !modeDisplay || !led) return;
-  if (!startBtn || !bpmDownBtn || !bpmUpBtn || !tapBtn || !tsBtn || !modeBtn) return;
+    if (!bpmDisplays.length || !timeSigDisplays.length || !modeDisplays.length || !leds.length) return;
+    if (!startBtns.length || !bpmDownBtns.length || !bpmUpBtns.length || !tapBtns.length || !tsBtns.length || !modeBtns.length) return;
 
-  const AUDIO_PATHS = {
-    accent: "/assets/audio/metronome-accent.wav",
-    regular: "/assets/audio/metronome-regular.wav",
-  };
+    const AUDIO_PATHS = {
+      accent: "/assets/audio/metronome-accent.wav",
+      regular: "/assets/audio/metronome-regular.wav",
+    };
 
-  const TIME_SIGNATURES = ["4/4", "3/4", "6/8"];
-  const MODES = ["REG", "BB", "HALF"];
+    const TIME_SIGNATURES = ["4/4", "3/4", "6/8"];
+    const MODES = ["REG", "BB", "HALF"];
 
-  const LOOKAHEAD_MS = 25;
-  const SCHEDULE_AHEAD_SEC = 0.1;
-  const MIN_BPM = 30;
-  const MAX_BPM = 260;
-  const TAP_RESET_MS = 2000;
-  const MAX_TAPS = 4;
+    const LOOKAHEAD_MS = 25;
+    const SCHEDULE_AHEAD_SEC = 0.1;
+    const MIN_BPM = 30;
+    const MAX_BPM = 260;
+    const TAP_RESET_MS = 2000;
+    const MAX_TAPS = 4;
 
-  let bpm = 100;
-  let timeSigIndex = 0;
-  let modeIndex = 0;
+    let bpm = 100;
+    let timeSigIndex = 0;
+    let modeIndex = 0;
 
-  let audioCtx = null;
-  let accentBuffer = null;
-  let regularBuffer = null;
-  let audioInitPromise = null;
+    let audioCtx = null;
+    let accentBuffer = null;
+    let regularBuffer = null;
+    let audioInitPromise = null;
 
-  let isRunning = false;
-  let schedulerTimer = 0;
-  let nextNoteTime = 0;
-  let currentBeat = 0;
+    let isRunning = false;
+    let schedulerTimer = 0;
+    let nextNoteTime = 0;
+    let currentBeat = 0;
 
-  let tapTimes = [];
-  let ledPulseToken = 0;
+    let tapTimes = [];
+    let ledPulseToken = 0;
 
-  const clamp = (n, min, max) => Math.min(max, Math.max(min, n));
+    const clamp = (n, min, max) => Math.min(max, Math.max(min, n));
 
-  function updateDisplay() {
-    bpmDisplay.textContent = String(bpm).padStart(3, "0");
-    timeSigDisplay.textContent = TIME_SIGNATURES[timeSigIndex];
-    modeDisplay.textContent = MODES[modeIndex];
-    startBtn.textContent = isRunning ? "STOP" : "START";
-    startBtn.classList.toggle("is-running", isRunning);
-    startBtn.setAttribute("aria-pressed", isRunning ? "true" : "false");
-  }
+    function updateDisplay() {
+      const bpmText = String(bpm).padStart(3, "0");
+      const tsText = TIME_SIGNATURES[timeSigIndex];
+      const modeText = MODES[modeIndex];
+      const startText = isRunning ? "STOP" : "START";
 
-  function getBeatsPerBar() {
-    const ts = TIME_SIGNATURES[timeSigIndex];
-    if (ts === "4/4") return 4;
-    if (ts === "3/4") return 3;
-    if (ts === "6/8") return 6;
-    return 4;
-  }
+      bpmDisplays.forEach((el) => {
+        el.textContent = bpmText;
+      });
 
-  function getBeatAction(beatIndex) {
-    const mode = MODES[modeIndex];
+      timeSigDisplays.forEach((el) => {
+        el.textContent = tsText;
+      });
 
-    if (mode === "REG") {
-      return beatIndex === 0 ? "accent" : "regular";
+      modeDisplays.forEach((el) => {
+        el.textContent = modeText;
+      });
+
+      startBtns.forEach((btn) => {
+        btn.textContent = startText;
+        btn.classList.toggle("is-running", isRunning);
+        btn.setAttribute("aria-pressed", isRunning ? "true" : "false");
+      });
     }
 
-    if (mode === "BB") {
+    function getBeatsPerBar() {
       const ts = TIME_SIGNATURES[timeSigIndex];
+      if (ts === "4/4") return 4;
+      if (ts === "3/4") return 3;
+      if (ts === "6/8") return 6;
+      return 4;
+    }
 
-      if (ts === "4/4") {
-        return beatIndex === 1 || beatIndex === 3 ? "accent" : "skip";
+    function getBeatAction(beatIndex) {
+      const mode = MODES[modeIndex];
+
+      if (mode === "REG") {
+        return beatIndex === 0 ? "accent" : "regular";
       }
 
-      if (ts === "3/4") {
-        return beatIndex === 1 ? "accent" : "skip";
+      if (mode === "BB") {
+        const ts = TIME_SIGNATURES[timeSigIndex];
+
+        if (ts === "4/4") return beatIndex === 1 || beatIndex === 3 ? "accent" : "skip";
+        if (ts === "3/4") return beatIndex === 1 ? "accent" : "skip";
+        if (ts === "6/8") return beatIndex === 3 ? "accent" : "skip";
+
+        return "skip";
       }
 
-      if (ts === "6/8") {
-        return beatIndex === 3 ? "accent" : "skip";
+      if (mode === "HALF") {
+        return beatIndex === 0 ? "accent" : "skip";
       }
 
-      return "skip";
+      return "regular";
     }
 
-    if (mode === "HALF") {
-      return beatIndex === 0 ? "accent" : "skip";
+    async function loadSample(url) {
+      const res = await fetch(url);
+      if (!res.ok) throw new Error(`Failed to load sample: ${url}`);
+      const arrayBuffer = await res.arrayBuffer();
+      return await audioCtx.decodeAudioData(arrayBuffer);
     }
 
-    return "regular";
-  }
+    async function initAudio() {
+      if (audioInitPromise) {
+        await audioInitPromise;
+        return;
+      }
 
-  async function loadSample(url) {
-    const res = await fetch(url);
-    if (!res.ok) {
-      throw new Error(`Failed to load sample: ${url}`);
+      audioInitPromise = (async () => {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+        const [accent, regular] = await Promise.all([
+          loadSample(AUDIO_PATHS.accent),
+          loadSample(AUDIO_PATHS.regular),
+        ]);
+
+        accentBuffer = accent;
+        regularBuffer = regular;
+      })();
+
+      try {
+        await audioInitPromise;
+      } catch (err) {
+        audioInitPromise = null;
+        console.error("Metronome audio init failed:", err);
+        throw err;
+      }
     }
-    const arrayBuffer = await res.arrayBuffer();
-    return await audioCtx.decodeAudioData(arrayBuffer);
-  }
 
-  async function initAudio() {
-    if (audioInitPromise) {
-      await audioInitPromise;
-      return;
-    }
+    function pulseLED(accent, whenAudioTime) {
+      if (!audioCtx || !leds.length) return;
 
-    audioInitPromise = (async () => {
-      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-
-      const [accent, regular] = await Promise.all([
-        loadSample(AUDIO_PATHS.accent),
-        loadSample(AUDIO_PATHS.regular),
-      ]);
-
-      accentBuffer = accent;
-      regularBuffer = regular;
-    })();
-
-    try {
-      await audioInitPromise;
-    } catch (err) {
-      audioInitPromise = null;
-      console.error("Metronome audio init failed:", err);
-      throw err;
-    }
-  }
-
-  function pulseLED(accent, whenAudioTime) {
-    if (!audioCtx || !led) return;
-
-    const msUntilPulse = Math.max(0, (whenAudioTime - audioCtx.currentTime) * 1000);
-    const token = ++ledPulseToken;
-
-    window.setTimeout(() => {
-      if (token !== ledPulseToken) return;
-
-      led.style.transition = "transform 70ms ease, opacity 70ms ease, filter 70ms ease";
-      led.style.opacity = "1";
-      led.style.transform = accent ? "scale(1.75)" : "scale(1.28)";
-      led.style.filter = accent ? "brightness(1.45)" : "brightness(1.15)";
+      const msUntilPulse = Math.max(0, (whenAudioTime - audioCtx.currentTime) * 1000);
+      const token = ++ledPulseToken;
 
       window.setTimeout(() => {
         if (token !== ledPulseToken) return;
-        led.style.opacity = ".95";
-        led.style.transform = "scale(1)";
-        led.style.filter = "brightness(1)";
-      }, 85);
-    }, msUntilPulse);
-  }
 
-  function playBuffer(buffer, when) {
-    if (!audioCtx || !buffer) return;
+        leds.forEach((led) => {
+          led.style.transition = "transform 70ms ease, opacity 70ms ease, filter 70ms ease";
+          led.style.opacity = "1";
+          led.style.transform = accent ? "scale(1.75)" : "scale(1.28)";
+          led.style.filter = accent ? "brightness(1.45)" : "brightness(1.15)";
+        });
 
-    const src = audioCtx.createBufferSource();
-    const gain = audioCtx.createGain();
-
-    gain.gain.setValueAtTime(1, when);
-    gain.gain.exponentialRampToValueAtTime(0.0001, when + 0.05);
-
-    src.buffer = buffer;
-    src.connect(gain);
-    gain.connect(audioCtx.destination);
-    src.start(when);
-    src.stop(when + Math.min(buffer.duration + 0.05, 0.2));
-  }
-
-  function scheduleBeat(when) {
-    const action = getBeatAction(currentBeat);
-
-    if (action === "accent") {
-      playBuffer(accentBuffer, when);
-      pulseLED(true, when);
-    } else if (action === "regular") {
-      playBuffer(regularBuffer, when);
-      pulseLED(false, when);
+        window.setTimeout(() => {
+          if (token !== ledPulseToken) return;
+          leds.forEach((led) => {
+            led.style.opacity = ".95";
+            led.style.transform = "scale(1)";
+            led.style.filter = "brightness(1)";
+          });
+        }, 85);
+      }, msUntilPulse);
     }
 
-    const secondsPerBeat = 60 / bpm;
-    nextNoteTime += secondsPerBeat;
-    currentBeat += 1;
+    function playBuffer(buffer, when) {
+      if (!audioCtx || !buffer) return;
 
-    if (currentBeat >= getBeatsPerBar()) {
-      currentBeat = 0;
+      const src = audioCtx.createBufferSource();
+      const gain = audioCtx.createGain();
+
+      gain.gain.setValueAtTime(1, when);
+      gain.gain.exponentialRampToValueAtTime(0.0001, when + 0.05);
+
+      src.buffer = buffer;
+      src.connect(gain);
+      gain.connect(audioCtx.destination);
+      src.start(when);
+      src.stop(when + Math.min(buffer.duration + 0.05, 0.2));
     }
-  }
 
-  function scheduler() {
-    if (!audioCtx || !isRunning) return;
+    function scheduleBeat(when) {
+      const action = getBeatAction(currentBeat);
 
-    while (nextNoteTime < audioCtx.currentTime + SCHEDULE_AHEAD_SEC) {
-      scheduleBeat(nextNoteTime);
-    }
-  }
-
-  function resetTransportPhase() {
-    if (!audioCtx) return;
-    currentBeat = 0;
-    nextNoteTime = audioCtx.currentTime + 0.05;
-  }
-
-  async function startMetronome() {
-    try {
-      await initAudio();
-
-      if (audioCtx.state === "suspended") {
-        await audioCtx.resume();
+      if (action === "accent") {
+        playBuffer(accentBuffer, when);
+        pulseLED(true, when);
+      } else if (action === "regular") {
+        playBuffer(regularBuffer, when);
+        pulseLED(false, when);
       }
 
-      resetTransportPhase();
+      const secondsPerBeat = 60 / bpm;
+      nextNoteTime += secondsPerBeat;
+      currentBeat += 1;
 
+      if (currentBeat >= getBeatsPerBar()) {
+        currentBeat = 0;
+      }
+    }
+
+    function scheduler() {
+      if (!audioCtx || !isRunning) return;
+
+      while (nextNoteTime < audioCtx.currentTime + SCHEDULE_AHEAD_SEC) {
+        scheduleBeat(nextNoteTime);
+      }
+    }
+
+    function resetTransportPhase() {
+      if (!audioCtx) return;
+      currentBeat = 0;
+      nextNoteTime = audioCtx.currentTime + 0.05;
+    }
+
+    async function startMetronome() {
+      try {
+        await initAudio();
+
+        if (audioCtx.state === "suspended") {
+          await audioCtx.resume();
+        }
+
+        resetTransportPhase();
+
+        if (schedulerTimer) {
+          clearInterval(schedulerTimer);
+          schedulerTimer = 0;
+        }
+
+        schedulerTimer = window.setInterval(scheduler, LOOKAHEAD_MS);
+        isRunning = true;
+        updateDisplay();
+      } catch (err) {
+        console.error("Unable to start metronome:", err);
+      }
+    }
+
+    function stopMetronome() {
       if (schedulerTimer) {
         clearInterval(schedulerTimer);
         schedulerTimer = 0;
       }
 
-      schedulerTimer = window.setInterval(scheduler, LOOKAHEAD_MS);
-      isRunning = true;
+      isRunning = false;
+      ledPulseToken += 1;
+
+      leds.forEach((led) => {
+        led.style.opacity = ".95";
+        led.style.transform = "scale(1)";
+        led.style.filter = "brightness(1)";
+      });
+
       updateDisplay();
-    } catch (err) {
-      console.error("Unable to start metronome:", err);
-    }
-  }
-
-  function stopMetronome() {
-    if (schedulerTimer) {
-      clearInterval(schedulerTimer);
-      schedulerTimer = 0;
     }
 
-    isRunning = false;
-    ledPulseToken += 1;
-    led.style.opacity = ".95";
-    led.style.transform = "scale(1)";
-    led.style.filter = "brightness(1)";
-    updateDisplay();
-  }
+    async function onTapTempo() {
+      try {
+        await initAudio();
 
-  async function onTapTempo() {
-    try {
-      await initAudio();
-
-      if (audioCtx.state === "suspended") {
-        await audioCtx.resume();
+        if (audioCtx.state === "suspended") {
+          await audioCtx.resume();
+        }
+      } catch (err) {
+        console.error("Unable to init metronome audio for tap tempo:", err);
       }
-    } catch (err) {
-      console.error("Unable to init metronome audio for tap tempo:", err);
+
+      const now = performance.now();
+
+      if (tapTimes.length && now - tapTimes[tapTimes.length - 1] > TAP_RESET_MS) {
+        tapTimes = [];
+      }
+
+      tapTimes.push(now);
+
+      if (tapTimes.length > MAX_TAPS) {
+        tapTimes.shift();
+      }
+
+      if (tapTimes.length < 2) return;
+
+      const intervals = [];
+      for (let i = 1; i < tapTimes.length; i += 1) {
+        intervals.push(tapTimes[i] - tapTimes[i - 1]);
+      }
+
+      const avg = intervals.reduce((sum, n) => sum + n, 0) / intervals.length;
+      const nextBpm = clamp(Math.round(60000 / avg), MIN_BPM, MAX_BPM);
+
+      bpm = nextBpm;
+      updateDisplay();
+
+      if (isRunning && audioCtx) {
+        resetTransportPhase();
+      }
     }
 
-    const now = performance.now();
+    function cycleTimeSignature() {
+      timeSigIndex = (timeSigIndex + 1) % TIME_SIGNATURES.length;
+      updateDisplay();
 
-    if (tapTimes.length && now - tapTimes[tapTimes.length - 1] > TAP_RESET_MS) {
-      tapTimes = [];
+      if (isRunning && audioCtx) {
+        resetTransportPhase();
+      }
     }
 
-    tapTimes.push(now);
+    function cycleMode() {
+      modeIndex = (modeIndex + 1) % MODES.length;
+      updateDisplay();
 
-    if (tapTimes.length > MAX_TAPS) {
-      tapTimes.shift();
+      if (isRunning && audioCtx) {
+        resetTransportPhase();
+      }
     }
 
-    if (tapTimes.length < 2) return;
+    startBtns.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        if (isRunning) stopMetronome();
+        else startMetronome();
+      });
+    });
 
-    const intervals = [];
-    for (let i = 1; i < tapTimes.length; i += 1) {
-      intervals.push(tapTimes[i] - tapTimes[i - 1]);
-    }
+    bpmDownBtns.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        bpm = clamp(bpm - 1, MIN_BPM, MAX_BPM);
+        updateDisplay();
 
-    const avg = intervals.reduce((sum, n) => sum + n, 0) / intervals.length;
-    const nextBpm = clamp(Math.round(60000 / avg), MIN_BPM, MAX_BPM);
+        if (isRunning && audioCtx) {
+          resetTransportPhase();
+        }
+      });
+    });
 
-    bpm = nextBpm;
+    bpmUpBtns.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        bpm = clamp(bpm + 1, MIN_BPM, MAX_BPM);
+        updateDisplay();
+
+        if (isRunning && audioCtx) {
+          resetTransportPhase();
+        }
+      });
+    });
+
+    tapBtns.forEach((btn) => btn.addEventListener("click", onTapTempo));
+    tsBtns.forEach((btn) => btn.addEventListener("click", cycleTimeSignature));
+    modeBtns.forEach((btn) => btn.addEventListener("click", cycleMode));
+
+    document.addEventListener("visibilitychange", () => {
+      if (document.hidden && isRunning) {
+        stopMetronome();
+      }
+    });
+
+    window.addEventListener("beforeunload", () => {
+      if (schedulerTimer) clearInterval(schedulerTimer);
+      if (audioCtx && audioCtx.state !== "closed") {
+        audioCtx.close().catch(() => {});
+      }
+    });
+
     updateDisplay();
+  }
 
-    if (isRunning && audioCtx) {
-      resetTransportPhase();
+  function setupMobileSections() {
+    const boardBody = $("#mobile-board-body");
+    const sessionBody = $("#mobile-session-body");
+    const learnBody = $("#mobile-learn-body");
+    const gearBody = $("#mobile-gear-body");
+
+    const boardToggle = $("#mobile-toggle-board");
+    const sessionToggle = $("#mobile-toggle-session");
+    const learnToggle = $("#mobile-toggle-learn");
+    const gearToggle = $("#mobile-toggle-gear");
+
+    const applyCollapsed = (body, collapsed) => {
+      if (!body) return;
+      if (collapsed) body.setAttribute("hidden", "");
+      else body.removeAttribute("hidden");
+    };
+
+    let boardCollapsed = readLS(KEYS.mobileBoardCollapsed, "0") === "1";
+    let sessionCollapsed = readLS(KEYS.mobileSessionCollapsed, "0") === "1";
+    let learnCollapsed = readLS(KEYS.mobileLearnCollapsed, "0") === "1";
+    let gearCollapsed = readLS(KEYS.mobileGearCollapsed, "0") === "1";
+
+    applyCollapsed(boardBody, boardCollapsed);
+    applyCollapsed(sessionBody, sessionCollapsed);
+    applyCollapsed(learnBody, learnCollapsed);
+    applyCollapsed(gearBody, gearCollapsed);
+
+    if (boardToggle && boardBody) {
+      boardToggle.addEventListener("click", () => {
+        boardCollapsed = !boardCollapsed;
+        applyCollapsed(boardBody, boardCollapsed);
+        writeLS(KEYS.mobileBoardCollapsed, boardCollapsed ? "1" : "0");
+      });
+    }
+
+    if (sessionToggle && sessionBody) {
+      sessionToggle.addEventListener("click", () => {
+        sessionCollapsed = !sessionCollapsed;
+        applyCollapsed(sessionBody, sessionCollapsed);
+        writeLS(KEYS.mobileSessionCollapsed, sessionCollapsed ? "1" : "0");
+      });
+    }
+
+    if (learnToggle && learnBody) {
+      learnToggle.addEventListener("click", () => {
+        learnCollapsed = !learnCollapsed;
+        applyCollapsed(learnBody, learnCollapsed);
+        writeLS(KEYS.mobileLearnCollapsed, learnCollapsed ? "1" : "0");
+      });
+    }
+
+    if (gearToggle && gearBody) {
+      gearToggle.addEventListener("click", () => {
+        gearCollapsed = !gearCollapsed;
+        applyCollapsed(gearBody, gearCollapsed);
+        writeLS(KEYS.mobileGearCollapsed, gearCollapsed ? "1" : "0");
+      });
     }
   }
 
-  function cycleTimeSignature() {
-    timeSigIndex = (timeSigIndex + 1) % TIME_SIGNATURES.length;
-    updateDisplay();
+  function setupMobileHandedness() {
+    const mobileShell = $(".console-shell--mobile");
+    const leftBtn = $("#mobile-hand-left");
+    const rightBtn = $("#mobile-hand-right");
 
-    if (isRunning && audioCtx) {
-      resetTransportPhase();
+    if (!mobileShell || (!leftBtn && !rightBtn)) return;
+
+    let handedness = (readLS(KEYS.mobileHandedness, "right") || "right").toLowerCase();
+    if (handedness !== "left" && handedness !== "right") {
+      handedness = "right";
     }
+
+    const applyHandedness = () => {
+      const isLeft = handedness === "left";
+      mobileShell.classList.toggle("is-left-handed", isLeft);
+
+      if (leftBtn) {
+        leftBtn.setAttribute("aria-pressed", isLeft ? "true" : "false");
+      }
+
+      if (rightBtn) {
+        rightBtn.setAttribute("aria-pressed", isLeft ? "false" : "true");
+      }
+
+      writeLS(KEYS.mobileHandedness, handedness);
+    };
+
+    if (leftBtn) {
+      leftBtn.addEventListener("click", () => {
+        handedness = "left";
+        applyHandedness();
+      });
+    }
+
+    if (rightBtn) {
+      rightBtn.addEventListener("click", () => {
+        handedness = "right";
+        applyHandedness();
+      });
+    }
+
+    applyHandedness();
   }
-
-  function cycleMode() {
-    modeIndex = (modeIndex + 1) % MODES.length;
-    updateDisplay();
-
-    if (isRunning && audioCtx) {
-      resetTransportPhase();
-    }
-  }
-
-  startBtn.addEventListener("click", () => {
-    if (isRunning) stopMetronome();
-    else startMetronome();
-  });
-
-  bpmDownBtn.addEventListener("click", () => {
-    bpm = clamp(bpm - 1, MIN_BPM, MAX_BPM);
-    updateDisplay();
-
-    if (isRunning && audioCtx) {
-      resetTransportPhase();
-    }
-  });
-
-  bpmUpBtn.addEventListener("click", () => {
-    bpm = clamp(bpm + 1, MIN_BPM, MAX_BPM);
-    updateDisplay();
-
-    if (isRunning && audioCtx) {
-      resetTransportPhase();
-    }
-  });
-
-  tapBtn.addEventListener("click", onTapTempo);
-  tsBtn.addEventListener("click", cycleTimeSignature);
-  modeBtn.addEventListener("click", cycleMode);
-
-  document.addEventListener("visibilitychange", () => {
-    if (document.hidden && isRunning) {
-      stopMetronome();
-    }
-  });
-
-  window.addEventListener("beforeunload", () => {
-    if (schedulerTimer) {
-      clearInterval(schedulerTimer);
-    }
-    if (audioCtx && audioCtx.state !== "closed") {
-      audioCtx.close().catch(() => {});
-    }
-  });
-
-  updateDisplay();
-}
 
   function boot() {
     const hb = $("#handle-board");
@@ -928,13 +1093,13 @@
     setupTransportLeds();
     setupMeters();
 
-    // Recovery mode:
-    // Gear + Learn stay on inline onclick in console.njk for now
-
     setupSessionTools();
     setupSignIn();
+    setupLockButtons();
     setupTransportTools();
     setupMetronome();
+    setupMobileSections();
+    setupMobileHandedness();
   }
 
   if (document.readyState === "loading") {
